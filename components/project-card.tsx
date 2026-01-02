@@ -3,27 +3,47 @@
 import type React from "react"
 
 import { useState } from "react"
-import { AlertTriangle, CheckCircle2, Circle, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import type { ProjectWithYarns } from "@/lib/types"
+import type { ProjectWithYarns, Yarn } from "@/lib/types"
 import { ManageProjectYarnsDialog } from "@/components/manage-project-yarns-dialog"
 import { getProjectConflicts, type YarnDemand } from "@/lib/yarn-utils"
 
 interface ProjectCardProps {
   project: ProjectWithYarns
   yarnDemands: Map<string, YarnDemand>
+  allYarns: Yarn[]
 }
 
-export function ProjectCard({ project, yarnDemands }: ProjectCardProps) {
+export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps) {
   const [editOpen, setEditOpen] = useState(false)
   const [manageYarnsOpen, setManageYarnsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -119,7 +139,9 @@ export function ProjectCard({ project, yarnDemands }: ProjectCardProps) {
                 {hasConflicts ? (
                   <div className="flex items-center gap-2 p-2 bg-destructive/10 rounded-md">
                     <AlertTriangle className="h-5 w-5 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">Yarn conflict detected</span>
+                    <span className="text-sm font-medium text-destructive">
+                      Yarn conflict detected
+                    </span>
                   </div>
                 ) : allYarnsInStock ? (
                   <div className="flex items-center gap-2">
@@ -147,14 +169,19 @@ export function ProjectCard({ project, yarnDemands }: ProjectCardProps) {
                             <span className="font-medium">{py.yarns.name}</span>
                             <span className="text-muted-foreground"> - {py.yarns.color}</span>
                           </div>
-                          <Badge variant={yarnHasConflict ? "destructive" : hasEnough ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              yarnHasConflict ? "destructive" : hasEnough ? "default" : "secondary"
+                            }
+                          >
                             {py.yarns.count}/{py.quantity_needed}
                           </Badge>
                         </div>
                         {yarnHasConflict && demand && (
                           <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
                             <p className="font-medium">
-                              Total demand: {demand.totalDemand} (Available: {demand.availableCount})
+                              Total demand: {demand.totalDemand} (Available: {demand.availableCount}
+                              )
                             </p>
                             {demand.projectDemands
                               .filter((p) => p.projectId !== project.id)
@@ -173,7 +200,12 @@ export function ProjectCard({ project, yarnDemands }: ProjectCardProps) {
             ) : (
               <div className="py-4 text-center">
                 <p className="text-sm text-muted-foreground">No yarns added yet</p>
-                <Button variant="link" size="sm" onClick={() => setManageYarnsOpen(true)} className="mt-2">
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setManageYarnsOpen(true)}
+                  className="mt-2"
+                >
                   Add yarns to project
                 </Button>
               </div>
@@ -218,7 +250,12 @@ export function ProjectCard({ project, yarnDemands }: ProjectCardProps) {
       </Dialog>
 
       {/* Manage Yarns Dialog */}
-      <ManageProjectYarnsDialog project={project} open={manageYarnsOpen} onOpenChange={setManageYarnsOpen} />
+      <ManageProjectYarnsDialog
+        project={project}
+        open={manageYarnsOpen}
+        onOpenChange={setManageYarnsOpen}
+        allYarns={allYarns}
+      />
     </>
   )
 }

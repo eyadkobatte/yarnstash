@@ -93,6 +93,8 @@ export function QuickAddYarnButton() {
             <Input
               id="name"
               required
+              type="text"
+              autoComplete="off"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Merino Wool"
@@ -104,6 +106,8 @@ export function QuickAddYarnButton() {
             <Input
               id="color"
               required
+              type="text"
+              autoComplete="off"
               value={formData.color}
               onChange={(e) => setFormData({ ...formData, color: e.target.value })}
               placeholder="e.g., Deep Blue"

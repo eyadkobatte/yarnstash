@@ -8,7 +8,10 @@ import { calculateYarnDemands } from "@/lib/yarn-utils"
 export default async function YarnsPage() {
   const supabase = await createClient()
 
-  const { data: yarns } = await supabase.from("yarns").select("*").order("created_at", { ascending: false })
+  const { data: yarns } = await supabase
+    .from("yarns")
+    .select("*")
+    .order("created_at", { ascending: false })
 
   const { data: projects } = await supabase.from("projects").select(
     `
@@ -17,7 +20,7 @@ export default async function YarnsPage() {
         *,
         yarns (*)
       )
-    `,
+    `
   )
 
   const yarnDemands = projects ? calculateYarnDemands(projects) : new Map()
@@ -61,7 +64,9 @@ export default async function YarnsPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-lg text-muted-foreground mb-4">No yarns in your inventory yet</p>
-            <p className="text-sm text-muted-foreground">Click the + button to add your first yarn</p>
+            <p className="text-sm text-muted-foreground">
+              Click the + button to add your first yarn
+            </p>
           </div>
         )}
       </main>

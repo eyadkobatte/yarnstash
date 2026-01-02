@@ -1,12 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { X } from "lucide-react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import type { ProjectWithYarns, Yarn } from "@/lib/types"
@@ -15,28 +27,19 @@ interface ManageProjectYarnsDialogProps {
   project: ProjectWithYarns
   open: boolean
   onOpenChange: (open: boolean) => void
+  allYarns: Yarn[]
 }
 
-export function ManageProjectYarnsDialog({ project, open, onOpenChange }: ManageProjectYarnsDialogProps) {
-  const [allYarns, setAllYarns] = useState<Yarn[]>([])
+export function ManageProjectYarnsDialog({
+  project,
+  open,
+  onOpenChange,
+  allYarns,
+}: ManageProjectYarnsDialogProps) {
   const [selectedYarnId, setSelectedYarnId] = useState("")
   const [quantity, setQuantity] = useState("1")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
-  useEffect(() => {
-    if (open) {
-      loadYarns()
-    }
-  }, [open])
-
-  const loadYarns = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from("yarns").select("*").order("name", { ascending: true })
-    if (data) {
-      setAllYarns(data)
-    }
-  }
 
   const handleAddYarn = async () => {
     if (!selectedYarnId) return
@@ -65,7 +68,9 @@ export function ManageProjectYarnsDialog({ project, open, onOpenChange }: Manage
     router.refresh()
   }
 
-  const availableYarns = allYarns.filter((yarn) => !project.project_yarns.some((py) => py.yarn_id === yarn.id))
+  const availableYarns = allYarns.filter(
+    (yarn) => !project.project_yarns.some((py) => py.yarn_id === yarn.id)
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,12 +87,17 @@ export function ManageProjectYarnsDialog({ project, open, onOpenChange }: Manage
               <Label>Current Yarns</Label>
               <div className="space-y-2">
                 {project.project_yarns.map((py) => (
-                  <div key={py.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div
+                    key={py.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
                     <div className="flex-1">
                       <p className="font-medium text-sm">
                         {py.yarns.name} - {py.yarns.color}
                       </p>
-                      <p className="text-xs text-muted-foreground">Quantity: {py.quantity_needed}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Quantity: {py.quantity_needed}
+                      </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleRemoveYarn(py.id)}>
                       <X className="h-4 w-4" />
@@ -114,7 +124,9 @@ export function ManageProjectYarnsDialog({ project, open, onOpenChange }: Manage
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-muted-foreground text-center">No yarns available</div>
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      No yarns available
+                    </div>
                   )}
                 </SelectContent>
               </Select>

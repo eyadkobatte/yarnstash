@@ -1,9 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { Navbar } from "@/components/navbar"
 import { CreateProjectButton } from "@/components/create-project-button"
-import { ProjectCard } from "@/components/project-card"
-import type { ProjectWithYarns } from "@/lib/types"
-import { calculateYarnDemands } from "@/lib/yarn-utils"
+import { ProjectsGrid } from "@/components/projects-grid"
 
 export default async function ProjectsPage() {
   const supabase = await createClient()
@@ -17,11 +15,14 @@ export default async function ProjectsPage() {
         *,
         yarns (*)
       )
-    `,
+    `
     )
     .order("created_at", { ascending: false })
 
-  const yarnDemands = projects ? calculateYarnDemands(projects) : new Map()
+  const { data: yarns } = await supabase
+    .from("yarns")
+    .select("*")
+    .order("name", { ascending: true })
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,18 +36,7 @@ export default async function ProjectsPage() {
           <CreateProjectButton />
         </div>
 
-        {projects && projects.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project: ProjectWithYarns) => (
-              <ProjectCard key={project.id} project={project} yarnDemands={yarnDemands} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg text-muted-foreground mb-4">No projects yet</p>
-            <p className="text-sm text-muted-foreground">Create your first project to get started</p>
-          </div>
-        )}
+        <ProjectsGrid projects={projects || []} allYarns={yarns || []} />
       </main>
     </div>
   )

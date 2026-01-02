@@ -53,7 +53,10 @@ export function calculateYarnDemands(projects: ProjectWithYarns[]): Map<string, 
   return demandMap
 }
 
-export function getProjectConflicts(project: ProjectWithYarns, yarnDemands: Map<string, YarnDemand>) {
+export function getProjectConflicts(
+  project: ProjectWithYarns,
+  yarnDemands: Map<string, YarnDemand>
+) {
   const conflicts = []
 
   for (const projectYarn of project.project_yarns) {

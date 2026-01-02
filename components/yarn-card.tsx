@@ -7,8 +7,19 @@ import { AlertTriangle, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -298,7 +309,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               {stockToAdd && (
                 <div className="flex justify-between mt-1">
                   <span className="text-muted-foreground">New Total:</span>
-                  <span className="font-medium">{yarn.count + (Number.parseInt(stockToAdd) || 0)}</span>
+                  <span className="font-medium">
+                    {yarn.count + (Number.parseInt(stockToAdd) || 0)}
+                  </span>
                 </div>
               )}
             </div>

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { AlertTriangle, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
+import { AlertTriangle, MoreVertical, Pencil, Plus, Trash2, X, Image as ImageIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,11 +33,22 @@ interface YarnCardProps {
   demand?: YarnDemand
 }
 
+function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
+  const supabase = createClient()
+  const { data } = supabase.storage.from("yarn-images").getPublicUrl(path)
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={data.publicUrl} alt={alt} className={className || "h-full w-full object-cover"} />
+  )
+}
+
 export function YarnCard({ yarn, demand }: YarnCardProps) {
   const [editOpen, setEditOpen] = useState(false)
   const [addStockOpen, setAddStockOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [stockToAdd, setStockToAdd] = useState("")
+  const [newFiles, setNewFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     name: yarn.name,
     color: yarn.color,
@@ -48,11 +59,57 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
   })
   const router = useRouter()
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewFiles(Array.from(e.target.files))
+    }
+  }
+
+  const removeNewFile = (index: number) => {
+    setNewFiles(newFiles.filter((_, i) => i !== index))
+  }
+
+  const handleDeleteImage = async (imageId: string, storagePath: string) => {
+    if (!confirm("Delete this image?")) return
+    
+    setIsLoading(true)
+    const supabase = createClient()
+    
+    // Delete from storage
+    const { error: storageError } = await supabase.storage
+      .from("yarn-images")
+      .remove([storagePath])
+      
+    if (storageError) {
+      console.error("Error deleting image from storage:", storageError)
+    }
+
+    // Delete from db
+    const { error: dbError } = await supabase
+      .from("yarn_images")
+      .delete()
+      .eq("id", imageId)
+
+    if (dbError) {
+      console.error("Error deleting image link:", dbError)
+    }
+    
+    setIsLoading(false)
+    router.refresh()
+  }
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+        setIsLoading(false)
+        return
+    }
+
     const newCount = Number.parseInt(formData.count) || 0
 
     const { error } = await supabase
@@ -71,8 +128,33 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
     setIsLoading(false)
 
+    // Upload newly selected images
+    if (newFiles.length > 0) {
+      for (const file of newFiles) {
+        const fileExt = file.name.split(".").pop()
+        const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from("yarn-images")
+          .upload(fileName, file)
+
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError)
+          continue
+        }
+
+        await supabase.from("yarn_images").insert({
+          yarn_id: yarn.id,
+          storage_path: fileName,
+        })
+      }
+    }
+
+    setIsLoading(false)
+
     if (!error) {
       setEditOpen(false)
+      setNewFiles([])
       router.refresh()
     }
   }
@@ -145,6 +227,15 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
           </div>
         </CardHeader>
         <CardContent>
+          {yarn.images && yarn.images.length > 0 && (
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+              {yarn.images.map((img) => (
+                <div key={img.id} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center">
+                    <DisplayImage path={img.storage_path} alt={yarn.name} />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="space-y-3">
             {demand && demand.hasConflict && (
               <div className="flex items-center gap-2 p-2 bg-destructive/10 rounded-md">
@@ -205,7 +296,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Yarn</DialogTitle>
             <DialogDescription>Update yarn information</DialogDescription>
@@ -269,6 +360,46 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Images</Label>
+              {yarn.images && yarn.images.length > 0 && (
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  {yarn.images.map((img) => (
+                    <div key={img.id} className="relative h-16 w-16 border rounded overflow-hidden group">
+                      <DisplayImage path={img.storage_path} alt="Yarn" className="object-cover w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteImage(img.id, img.storage_path)}
+                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className="cursor-pointer"
+              />
+              {newFiles.length > 0 && (
+                <div className="space-y-1 mt-2">
+                   {newFiles.map((file, idx) => (
+                     <div key={idx} className="flex items-center justify-between text-xs p-1 border rounded">
+                       <span className="truncate max-w-[150px]">{file.name}</span>
+                       <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => removeNewFile(idx)}>
+                         <X className="h-3 w-3" />
+                       </Button>
+                     </div>
+                   ))}
+                </div>
+              )}
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

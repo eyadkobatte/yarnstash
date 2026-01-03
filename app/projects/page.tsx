@@ -14,7 +14,8 @@ export default async function ProjectsPage() {
       project_yarns (
         *,
         yarns (*)
-      )
+      ),
+      images:project_images(*)
     `
     )
     .order("created_at", { ascending: false })

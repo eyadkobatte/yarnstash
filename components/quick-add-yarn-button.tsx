@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation"
 export function QuickAddYarnButton() {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     name: "",
     color: "",
@@ -31,6 +32,16 @@ export function QuickAddYarnButton() {
     notes: "",
   })
   const router = useRouter()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files))
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setFiles(files.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,31 +58,65 @@ export function QuickAddYarnButton() {
       return
     }
 
-    const { error } = await supabase.from("yarns").insert({
-      name: formData.name,
-      color: formData.color,
-      count: Number.parseInt(formData.count) || 0,
-      color_number: formData.color_number || null,
-      lot_number: formData.lot_number || null,
-      notes: formData.notes || null,
-      is_active: Number.parseInt(formData.count) > 0,
-      user_id: user.id,
-    })
+    const { data: yarn, error } = await supabase
+      .from("yarns")
+      .insert({
+        name: formData.name,
+        color: formData.color,
+        count: Number.parseInt(formData.count) || 0,
+        color_number: formData.color_number || null,
+        lot_number: formData.lot_number || null,
+        notes: formData.notes || null,
+        is_active: Number.parseInt(formData.count) > 0,
+        user_id: user.id,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Error creating yarn:", error)
+      setIsLoading(false)
+      return
+    }
+
+    // Upload images if any
+    if (files.length > 0 && yarn) {
+      for (const file of files) {
+        const fileExt = file.name.split(".").pop()
+        const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from("yarn-images")
+          .upload(fileName, file)
+
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError)
+          continue
+        }
+
+        const { error: imageError } = await supabase.from("yarn_images").insert({
+          yarn_id: yarn.id,
+          storage_path: fileName,
+        })
+
+        if (imageError) {
+          console.error("Error linking image:", imageError)
+        }
+      }
+    }
 
     setIsLoading(false)
-
-    if (!error) {
-      setFormData({
-        name: "",
-        color: "",
-        count: "",
-        color_number: "",
-        lot_number: "",
-        notes: "",
-      })
-      setOpen(false)
-      router.refresh()
-    }
+    setFormData({
+      name: "",
+      color: "",
+      count: "",
+      color_number: "",
+      lot_number: "",
+      notes: "",
+    })
+    setFiles([])
+    setOpen(false)
+    router.refresh()
   }
 
   return (
@@ -82,7 +127,7 @@ export function QuickAddYarnButton() {
           <span className="sr-only">Add Yarn</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Yarn</DialogTitle>
           <DialogDescription>Add a new yarn to your inventory</DialogDescription>
@@ -156,6 +201,36 @@ export function QuickAddYarnButton() {
               placeholder="Any additional notes..."
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="images">Images</Label>
+            <Input
+              id="images"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="cursor-pointer"
+            />
+            {files.length > 0 && (
+              <div className="space-y-2">
+                {files.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 text-sm border rounded">
+                    <span className="truncate max-w-[200px]">{file.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeFile(index)}
+                      className="h-8 w-8 text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>

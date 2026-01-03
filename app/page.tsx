@@ -10,7 +10,7 @@ export default async function YarnsPage() {
 
   const { data: yarns } = await supabase
     .from("yarns")
-    .select("*")
+    .select("*, images:yarn_images(*)")
     .order("created_at", { ascending: false })
 
   const { data: projects } = await supabase.from("projects").select(

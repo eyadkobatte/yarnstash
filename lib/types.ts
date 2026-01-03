@@ -1,3 +1,10 @@
+export interface YarnImage {
+  id: string
+  yarn_id: string
+  storage_path: string
+  created_at: string
+}
+
 export interface Yarn {
   id: string
   name: string
@@ -9,6 +16,14 @@ export interface Yarn {
   is_active: boolean
   created_at: string
   updated_at: string
+  images?: YarnImage[]
+}
+
+export interface ProjectImage {
+  id: string
+  project_id: string
+  storage_path: string
+  created_at: string
 }
 
 export interface Project {
@@ -17,6 +32,7 @@ export interface Project {
   description?: string | null
   created_at: string
   updated_at: string
+  images?: ProjectImage[]
 }
 
 export interface ProjectYarn {

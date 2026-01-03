@@ -93,7 +93,7 @@ export function ManageProjectYarnsDialog({
                   >
                     <div className="flex-1">
                       <p className="font-medium text-sm">
-                        {py.yarns.name} - {py.yarns.color}
+                        {py.yarns.name} - {py.yarns.colorway}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Quantity: {py.quantity_needed}
@@ -120,7 +120,7 @@ export function ManageProjectYarnsDialog({
                   {availableYarns.length > 0 ? (
                     availableYarns.map((yarn) => (
                       <SelectItem key={yarn.id} value={yarn.id}>
-                        {yarn.name} - {yarn.color}
+                        {yarn.name} - {yarn.colorway}
                       </SelectItem>
                     ))
                   ) : (

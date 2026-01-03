@@ -8,12 +8,12 @@ export interface YarnImage {
 export interface Yarn {
   id: string
   name: string
-  color: string
+  colorway: string
   count: number
-  color_number?: string | null
   lot_number?: string | null
   notes?: string | null
   is_active: boolean
+  ravelry_id?: number | null
   created_at: string
   updated_at: string
   images?: YarnImage[]

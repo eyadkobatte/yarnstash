@@ -4,7 +4,7 @@ Manage your yarn stashes and keep track of your inventory. Add projects and allo
 
 ## TODO
 
-- [ ] Add Image upload
+- [x] Add Image upload
 - [ ] OCR from images to detect yarn and hook size, etc
 - [ ] Library of yarn names from yarn companies for autocomplete
 - [ ] Add other equipment to the stash (Hooks, etc)

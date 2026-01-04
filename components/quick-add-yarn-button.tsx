@@ -88,6 +88,21 @@ export function QuickAddYarnButton() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      alert("Yarn name is required")
+      return
+    }
+    if (!formData.colorway.trim()) {
+      alert("Colorway is required")
+      return
+    }
+    if (!formData.count || Number.parseInt(formData.count) < 0) {
+      alert("A valid count is required")
+      return
+    }
+    
     setIsLoading(true)
 
     const supabase = createClient()

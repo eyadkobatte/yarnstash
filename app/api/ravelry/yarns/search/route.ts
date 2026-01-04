@@ -33,15 +33,9 @@ export async function GET(request: Request) {
         },
       }
     )
-    console.log(url, searchParams.toString())
+
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error("Ravelry API Error:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: errorBody,
-      })
 
       return NextResponse.json(
         { error: `Ravelry API error: ${response.statusText}`, details: errorBody },
@@ -49,7 +43,6 @@ export async function GET(request: Request) {
       )
     }
     const data = await response.json()
-    console.log('data', data)
     return NextResponse.json(data)
   } catch (error) {
     console.error("Error fetching from Ravelry:", error)

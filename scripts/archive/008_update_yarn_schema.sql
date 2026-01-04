@@ -11,9 +11,19 @@ ALTER TABLE public.yarns RENAME COLUMN color TO colorway;
 
 -- Consolidate existing color_number into colorway if they exist (optional but good practice)
 -- This combines "Red" and "123" into "123 - Red"
-UPDATE public.yarns 
-SET colorway = color_number || ' - ' || colorway 
-WHERE color_number IS NOT NULL AND color_number != '';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'yarns' 
+    AND column_name = 'color_number'
+  ) THEN
+    UPDATE public.yarns 
+    SET colorway = color_number || ' - ' || colorway 
+    WHERE color_number IS NOT NULL AND color_number != '';
+  END IF;
+END $$;
 
 -- Drop color_number column
 ALTER TABLE public.yarns DROP COLUMN IF EXISTS color_number;

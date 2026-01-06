@@ -135,7 +135,7 @@ CREATE POLICY "yarns_insert" ON public.yarns
   FOR INSERT WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "yarns_update" ON public.yarns
-  FOR UPDATE USING (user_id = (SELECT auth.uid()));
+  FOR UPDATE USING (user_id = (SELECT auth.uid()))
   WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "yarns_delete" ON public.yarns
@@ -152,7 +152,7 @@ CREATE POLICY "projects_insert" ON public.projects
   FOR INSERT WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "projects_update" ON public.projects
-  FOR UPDATE USING (user_id = (SELECT auth.uid()));
+  FOR UPDATE USING (user_id = (SELECT auth.uid()))
   WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "projects_delete" ON public.projects

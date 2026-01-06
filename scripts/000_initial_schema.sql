@@ -178,6 +178,11 @@ CREATE POLICY "project_yarns_insert" ON public.project_yarns
       WHERE projects.id = project_yarns.project_id
       AND projects.user_id = (SELECT auth.uid())
     )
+    AND EXISTS (
+      SELECT 1 FROM public.yarns
+      WHERE yarns.id = project_yarns.yarn_id
+      AND yarns.user_id = (SELECT auth.uid())
+    )
   );
 
 CREATE POLICY "project_yarns_update" ON public.project_yarns

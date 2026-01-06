@@ -172,7 +172,7 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
     if (demand && demand.hasConflict) {
       return false
     }
-    return py.yarns.is_active && py.yarns.count >= py.quantity_needed
+    return py.yarns.is_active && py.yarns.skein_count >= py.quantity_needed
   })
 
   const hasYarns = project.project_yarns.length > 0
@@ -249,21 +249,21 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
                   {project.project_yarns.map((py) => {
                     const demand = yarnDemands.get(py.yarn_id)
                     const yarnHasConflict = demand && demand.hasConflict
-                    const hasEnough = py.yarns.is_active && py.yarns.count >= py.quantity_needed
+                    const hasEnough = py.yarns.is_active && py.yarns.skein_count >= py.quantity_needed
 
                     return (
                       <div key={py.id} className="space-y-1">
                         <div className="flex items-start justify-between gap-2 text-sm">
                           <div className="flex-1">
                             <span className="font-medium">{py.yarns.name}</span>
-                            <span className="text-muted-foreground"> - {py.yarns.color}</span>
+                            <span className="text-muted-foreground"> - {py.yarns.colorway}</span>
                           </div>
                           <Badge
                             variant={
                               yarnHasConflict ? "destructive" : hasEnough ? "default" : "secondary"
                             }
                           >
-                            {py.yarns.count}/{py.quantity_needed}
+                            {py.yarns.skein_count}/{py.quantity_needed}
                           </Badge>
                         </div>
                         {yarnHasConflict && demand && (

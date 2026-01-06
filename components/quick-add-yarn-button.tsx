@@ -63,6 +63,8 @@ export function QuickAddYarnButton() {
       ...prev,
       name: `${yarn.yarn_company_name} ${yarn.name}`,
       ravelry_id: yarn.id,
+      colorway: "",
+      colorway_id: "",
     }))
 
     setIsFetchingColorways(true)
@@ -121,7 +123,7 @@ export function QuickAddYarnButton() {
       .insert({
         name: formData.name,
         colorway: formData.colorway,
-        count: Number.parseInt(formData.count) || 0,
+        skein_count: Number.parseInt(formData.count) || 0,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
         is_active: Number.parseInt(formData.count) > 0,

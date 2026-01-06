@@ -9,7 +9,7 @@ export interface Yarn {
   id: string
   name: string
   colorway: string
-  count: number
+  skein_count: number
   lot_number?: string | null
   notes?: string | null
   is_active: boolean

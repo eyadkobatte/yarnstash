@@ -37,6 +37,13 @@ export function ColorwayAutocomplete({ colorways, onSelect, onManualInput, disab
   const [query, setQuery] = React.useState("")
   const [selectedDisplay, setSelectedDisplay] = React.useState("")
 
+  // Reset state when colorways change (e.g. when a new yarn is selected)
+  React.useEffect(() => {
+    setValue("")
+    setQuery("")
+    setSelectedDisplay("")
+  }, [colorways])
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

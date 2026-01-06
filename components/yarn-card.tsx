@@ -52,7 +52,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
   const [formData, setFormData] = useState({
     name: yarn.name,
     colorway: yarn.colorway,
-    count: yarn.count.toString(),
+    count: yarn.skein_count.toString(),
     lot_number: yarn.lot_number || "",
     notes: yarn.notes || "",
   })
@@ -116,7 +116,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
       .update({
         name: formData.name,
         colorway: formData.colorway,
-        count: newCount,
+        skein_count: newCount,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
         is_active: newCount > 0,
@@ -164,12 +164,12 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
     const supabase = createClient()
     const amountToAdd = Number.parseInt(stockToAdd) || 0
-    const newCount = yarn.count + amountToAdd
+    const newCount = yarn.skein_count + amountToAdd
 
     const { error } = await supabase
       .from("yarns")
       .update({
-        count: newCount,
+        skein_count: newCount,
         is_active: newCount > 0,
         updated_at: new Date().toISOString(),
       })
@@ -248,7 +248,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">In Stock:</span>
               <Badge variant={yarn.is_active ? "default" : "secondary"}>
-                {yarn.count} {yarn.count === 1 ? "skein" : "skeins"}
+                {yarn.skein_count} {yarn.skein_count === 1 ? "skein" : "skeins"}
               </Badge>
             </div>
 
@@ -425,13 +425,13 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             <div className="rounded-lg bg-muted p-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current:</span>
-                <span className="font-medium">{yarn.count}</span>
+                <span className="font-medium">{yarn.skein_count}</span>
               </div>
               {stockToAdd && (
                 <div className="flex justify-between mt-1">
                   <span className="text-muted-foreground">New Total:</span>
                   <span className="font-medium">
-                    {yarn.count + (Number.parseInt(stockToAdd) || 0)}
+                    {yarn.skein_count + (Number.parseInt(stockToAdd) || 0)}
                   </span>
                 </div>
               )}

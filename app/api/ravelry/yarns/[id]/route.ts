@@ -19,18 +19,26 @@ export async function GET(
   const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
   try {
-    const searchParams = new URLSearchParams([
+    const ravelryParams = new URLSearchParams([
       ['include', 'colorways']
     ])
-    const response = await fetch(`https://api.ravelry.com/yarns/${id}.json?${searchParams.toString()}`, {
+    const response = await fetch(`https://api.ravelry.com/yarns/${id}.json?${ravelryParams.toString()}`, {
       headers: {
         Authorization: `Basic ${auth}`,
       },
     })
 
     if (!response.ok) {
-        return NextResponse.json(
-            { error: `Ravelry API error: ${response.statusText}` },
+       const errorBody = await response.text()
+       console.error("Ravelry API Error:", {
+         status: response.status,
+         statusText: response.statusText,
+         headers: Object.fromEntries(response.headers.entries()),
+         body: errorBody,
+         params: ravelryParams
+       })
+      return NextResponse.json(
+            { error: `Ravelry API error: ${response.statusText}` ,details: errorBody },
             { status: response.status }
         )
     }

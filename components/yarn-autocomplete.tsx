@@ -51,6 +51,7 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
     async function fetchYarns() {
       if (!debouncedQuery) {
         setYarns([])
+        setLoading(false)
         return
       }
 
@@ -70,7 +71,9 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
         }
         console.error("Failed to fetch yarns:", error)
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 

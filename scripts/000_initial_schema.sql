@@ -53,7 +53,7 @@ CREATE TABLE public.yarns (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name text NOT NULL,
   colorway text NOT NULL,
-  count integer NOT NULL DEFAULT 0,
+  skein_count integer NOT NULL DEFAULT 0,
   lot_number text,
   notes text,
   is_active boolean NOT NULL DEFAULT true,
@@ -77,7 +77,7 @@ CREATE TABLE public.project_yarns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   yarn_id uuid NOT NULL REFERENCES public.yarns(id) ON DELETE CASCADE,
-  quantity_needed integer NOT NULL DEFAULT 1,
+  quantity_needed integer NOT NULL DEFAULT 1 CHECK (quantity_needed > 0),
   created_at timestamptz DEFAULT now(),
   UNIQUE(project_id, yarn_id)
 );
@@ -87,7 +87,8 @@ CREATE TABLE public.yarn_images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   yarn_id uuid NOT NULL REFERENCES public.yarns(id) ON DELETE CASCADE,
   storage_path text NOT NULL,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(yarn_id, storage_path)
 );
 
 -- Project images table
@@ -95,7 +96,8 @@ CREATE TABLE public.project_images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   storage_path text NOT NULL,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(project_id, storage_path)
 );
 
 -- ============================================================================
@@ -134,9 +136,11 @@ CREATE POLICY "yarns_insert" ON public.yarns
 
 CREATE POLICY "yarns_update" ON public.yarns
   FOR UPDATE USING (user_id = (SELECT auth.uid()));
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "yarns_delete" ON public.yarns
   FOR DELETE USING (user_id = (SELECT auth.uid()));
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- -----------------------------------------------------------------------------
 -- PROJECTS policies
@@ -149,9 +153,11 @@ CREATE POLICY "projects_insert" ON public.projects
 
 CREATE POLICY "projects_update" ON public.projects
   FOR UPDATE USING (user_id = (SELECT auth.uid()));
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "projects_delete" ON public.projects
   FOR DELETE USING (user_id = (SELECT auth.uid()));
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- -----------------------------------------------------------------------------
 -- PROJECT_YARNS policies (check ownership via parent project)

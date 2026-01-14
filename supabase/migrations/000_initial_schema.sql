@@ -14,6 +14,17 @@
 -- PART 1: CLEANUP - Drop existing tables and storage policies
 -- ============================================================================
 
+-- Safety check: Fail if yarns table has data (prevents accidental re-run on production)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'yarns' AND table_schema = 'public') THEN
+    IF EXISTS (SELECT 1 FROM public.yarns LIMIT 1) THEN
+      RAISE EXCEPTION 'SAFETY: yarns table contains data. This migration would cause data loss.';
+    END IF;
+  END IF;
+END $$;
+
+
 -- Drop tables in correct order (children before parents due to FK constraints)
 DROP TABLE IF EXISTS public.project_images CASCADE;
 DROP TABLE IF EXISTS public.yarn_images CASCADE;
@@ -58,8 +69,8 @@ CREATE TABLE public.yarns (
   notes text,
   is_active boolean NOT NULL DEFAULT true,
   ravelry_id integer,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Projects table
@@ -68,8 +79,8 @@ CREATE TABLE public.projects (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name text NOT NULL,
   description text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Project-Yarns junction table
@@ -78,7 +89,7 @@ CREATE TABLE public.project_yarns (
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   yarn_id uuid NOT NULL REFERENCES public.yarns(id) ON DELETE CASCADE,
   quantity_needed integer NOT NULL DEFAULT 1 CHECK (quantity_needed > 0),
-  created_at timestamptz DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(project_id, yarn_id)
 );
 
@@ -87,7 +98,7 @@ CREATE TABLE public.yarn_images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   yarn_id uuid NOT NULL REFERENCES public.yarns(id) ON DELETE CASCADE,
   storage_path text NOT NULL,
-  created_at timestamptz DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(yarn_id, storage_path)
 );
 
@@ -96,7 +107,7 @@ CREATE TABLE public.project_images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   storage_path text NOT NULL,
-  created_at timestamptz DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(project_id, storage_path)
 );
 

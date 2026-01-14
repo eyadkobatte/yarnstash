@@ -31,6 +31,8 @@ DROP TABLE IF EXISTS public.yarn_images CASCADE;
 DROP TABLE IF EXISTS public.project_yarns CASCADE;
 DROP TABLE IF EXISTS public.projects CASCADE;
 DROP TABLE IF EXISTS public.yarns CASCADE;
+DROP FUNCTION IF EXISTS public.delete_yarn_image_storage() CASCADE;
+DROP FUNCTION IF EXISTS public.delete_project_image_storage() CASCADE;
 
 -- Drop existing storage policies (use IF EXISTS to avoid errors)
 DROP POLICY IF EXISTS "Give users access to own folder 1okq6b_0" ON storage.objects;
@@ -53,6 +55,31 @@ DROP POLICY IF EXISTS "project_images_storage_delete" ON storage.objects;
 -- Empty storage buckets (delete all objects)
 DELETE FROM storage.objects WHERE bucket_id = 'yarn-images';
 DELETE FROM storage.objects WHERE bucket_id = 'project-images';
+
+-- -----------------------------------------------------------------------------
+-- Storage Cleanup Functions
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.delete_yarn_image_storage()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM storage.objects WHERE bucket_id = 'yarn-images' AND name = OLD.storage_path;
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.delete_project_image_storage()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM storage.objects WHERE bucket_id = 'project-images' AND name = OLD.storage_path;
+  RETURN OLD;
+END;
+$$;
 
 -- ============================================================================
 -- PART 2: CREATE TABLES
@@ -110,6 +137,17 @@ CREATE TABLE public.project_images (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(project_id, storage_path)
 );
+
+-- Triggers for automatic storage cleanup
+CREATE TRIGGER trigger_delete_yarn_image_storage
+  BEFORE DELETE ON public.yarn_images
+  FOR EACH ROW
+  EXECUTE FUNCTION public.delete_yarn_image_storage();
+
+CREATE TRIGGER trigger_delete_project_image_storage
+  BEFORE DELETE ON public.project_images
+  FOR EACH ROW
+  EXECUTE FUNCTION public.delete_project_image_storage();
 
 -- ============================================================================
 -- PART 3: CREATE INDEXES FOR RLS PERFORMANCE
@@ -289,12 +327,14 @@ CREATE POLICY "project_images_delete" ON public.project_images
 -- ============================================================================
 
 -- Create buckets (idempotent)
+-- These buckets are private (public = false) to ensure RLS policies are enforced.
+-- Rationale: Protect user privacy and prevent unauthorized access to personal yarn/project photos.
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('yarn-images', 'yarn-images', true)
+VALUES ('yarn-images', 'yarn-images', false)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('project-images', 'project-images', true)
+VALUES ('project-images', 'project-images', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================

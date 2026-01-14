@@ -43,8 +43,8 @@ export function calculateYarnDemands(projects: ProjectWithYarns[]): Map<string, 
               quantity: projectYarn.quantity_needed,
             },
           ],
-          hasConflict: totalDemand > projectYarn.yarns.count,
-          availableCount: projectYarn.yarns.count,
+          hasConflict: totalDemand > projectYarn.yarns.skein_count,
+          availableCount: projectYarn.yarns.skein_count,
         })
       }
     }

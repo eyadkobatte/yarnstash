@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { YarnAutocomplete, type RavelryYarn } from "./yarn-autocomplete"
+import { ColorwayAutocomplete, type RavelryColorway } from "./colorway-autocomplete"
 
 export function QuickAddYarnButton() {
   const [open, setOpen] = useState(false)
@@ -25,13 +27,17 @@ export function QuickAddYarnButton() {
   const [files, setFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     name: "",
-    color: "",
+    colorway: "",
     count: "",
-    color_number: "",
     lot_number: "",
     notes: "",
+    ravelry_id: null as number | null,
+    colorway_id: "" as string,
   })
+  const [colorways, setColorways] = useState<RavelryColorway[]>([])
+  const [isFetchingColorways, setIsFetchingColorways] = useState(false)
   const router = useRouter()
+  const colorwayAbortRef = useRef<AbortController | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -43,8 +49,62 @@ export function QuickAddYarnButton() {
     setFiles(files.filter((_, i) => i !== index))
   }
 
+  const handleYarnSelect = async (yarn: RavelryYarn | null) => {
+    if (!yarn) return
+
+    // Abort previous colorway fetch if any
+    if (colorwayAbortRef.current) {
+      colorwayAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    colorwayAbortRef.current = controller
+
+    setFormData((prev) => ({
+      ...prev,
+      name: `${yarn.yarn_company_name} ${yarn.name}`,
+      ravelry_id: yarn.id,
+      colorway: "",
+      colorway_id: "",
+    }))
+
+    setIsFetchingColorways(true)
+    try {
+      const res = await fetch(`/api/ravelry/yarns/${yarn.id}`, {
+        signal: controller.signal
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.yarn && data.colorways) {
+            setColorways(data.colorways)
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
+      console.error("Failed to fetch colorways:", error)
+    } finally {
+      if (colorwayAbortRef.current === controller) {
+        setIsFetchingColorways(false)
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      alert("Yarn name is required")
+      return
+    }
+    if (!formData.colorway.trim()) {
+      alert("Colorway is required")
+      return
+    }
+    if (!formData.count || Number.parseInt(formData.count) < 0) {
+      alert("A valid count is required")
+      return
+    }
+    
     setIsLoading(true)
 
     const supabase = createClient()
@@ -62,13 +122,13 @@ export function QuickAddYarnButton() {
       .from("yarns")
       .insert({
         name: formData.name,
-        color: formData.color,
-        count: Number.parseInt(formData.count) || 0,
-        color_number: formData.color_number || null,
+        colorway: formData.colorway,
+        skein_count: Number.parseInt(formData.count) || 0,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
         is_active: Number.parseInt(formData.count) > 0,
         user_id: user.id,
+        ravelry_id: formData.ravelry_id,
       })
       .select()
       .single()
@@ -108,13 +168,15 @@ export function QuickAddYarnButton() {
     setIsLoading(false)
     setFormData({
       name: "",
-      color: "",
+      colorway: "",
       count: "",
-      color_number: "",
       lot_number: "",
       notes: "",
+      ravelry_id: null,
+      colorway_id: "",
     })
     setFiles([])
+    setColorways([])
     setOpen(false)
     router.refresh()
   }
@@ -135,27 +197,35 @@ export function QuickAddYarnButton() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              required
-              type="text"
-              autoComplete="off"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Merino Wool"
+            <YarnAutocomplete
+              onSelect={handleYarnSelect}
+              onManualInput={(name) => setFormData((prev) => ({ ...prev, name }))}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color">Color *</Label>
-            <Input
-              id="color"
-              required
-              type="text"
-              autoComplete="off"
-              value={formData.color}
-              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              placeholder="e.g., Deep Blue"
+            <Label htmlFor="colorway">Colorway *</Label>
+            <ColorwayAutocomplete
+              colorways={colorways}
+              onSelect={(colorway) => {
+                if (colorway) {
+                  setFormData(prev => ({
+                    ...prev,
+                    colorway: colorway.name ? `${colorway.code} - ${colorway.name}` : colorway.code,
+                    colorway_id: colorway.id.toString()
+                  }))
+                } else {
+                  setFormData(prev => ({
+                    ...prev,
+                    colorway: "",
+                    colorway_id: ""
+                  }))
+                }
+              }}
+              onManualInput={(val) => {
+                setFormData(prev => ({ ...prev, colorway: val, colorway_id: "" }))
+              }}
+              disabled={isFetchingColorways}
             />
           </div>
 
@@ -169,16 +239,6 @@ export function QuickAddYarnButton() {
               value={formData.count}
               onChange={(e) => setFormData({ ...formData, count: e.target.value })}
               placeholder="Number of skeins"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="color_number">Color Number</Label>
-            <Input
-              id="color_number"
-              value={formData.color_number}
-              onChange={(e) => setFormData({ ...formData, color_number: e.target.value })}
-              placeholder="e.g., #1234"
             />
           </div>
 

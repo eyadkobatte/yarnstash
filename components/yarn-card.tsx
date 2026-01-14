@@ -51,9 +51,8 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     name: yarn.name,
-    color: yarn.color,
-    count: yarn.count.toString(),
-    color_number: yarn.color_number || "",
+    colorway: yarn.colorway,
+    count: yarn.skein_count.toString(),
     lot_number: yarn.lot_number || "",
     notes: yarn.notes || "",
   })
@@ -116,13 +115,13 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
       .from("yarns")
       .update({
         name: formData.name,
-        color: formData.color,
-        count: newCount,
-        color_number: formData.color_number || null,
+        colorway: formData.colorway,
+        skein_count: newCount,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
         is_active: newCount > 0,
         updated_at: new Date().toISOString(),
+        ravelry_id: yarn.ravelry_id, // Preserve ravelry_id
       })
       .eq("id", yarn.id)
 
@@ -165,12 +164,12 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
     const supabase = createClient()
     const amountToAdd = Number.parseInt(stockToAdd) || 0
-    const newCount = yarn.count + amountToAdd
+    const newCount = yarn.skein_count + amountToAdd
 
     const { error } = await supabase
       .from("yarns")
       .update({
-        count: newCount,
+        skein_count: newCount,
         is_active: newCount > 0,
         updated_at: new Date().toISOString(),
       })
@@ -200,7 +199,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <CardTitle className="text-lg">{yarn.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{yarn.color}</p>
+              <p className="text-sm text-muted-foreground">{yarn.colorway}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -249,7 +248,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">In Stock:</span>
               <Badge variant={yarn.is_active ? "default" : "secondary"}>
-                {yarn.count} {yarn.count === 1 ? "skein" : "skeins"}
+                {yarn.skein_count} {yarn.skein_count === 1 ? "skein" : "skeins"}
               </Badge>
             </div>
 
@@ -265,17 +264,17 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               </div>
             )}
 
-            {yarn.color_number && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Color Number:</span>
-                <span className="text-sm font-medium">{yarn.color_number}</span>
-              </div>
-            )}
-
             {yarn.lot_number && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Lot Number:</span>
                 <span className="text-sm font-medium">{yarn.lot_number}</span>
+              </div>
+            )}
+
+            {yarn.ravelry_id && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Ravelry ID:</span>
+                <span className="text-sm font-medium text-muted-foreground">#{yarn.ravelry_id}</span>
               </div>
             )}
 
@@ -313,12 +312,12 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-color">Color *</Label>
+              <Label htmlFor="edit-colorway">Colorway *</Label>
               <Input
-                id="edit-color"
+                id="edit-colorway"
                 required
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                value={formData.colorway}
+                onChange={(e) => setFormData({ ...formData, colorway: e.target.value })}
               />
             </div>
 
@@ -331,15 +330,6 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 min="0"
                 value={formData.count}
                 onChange={(e) => setFormData({ ...formData, count: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-color-number">Color Number</Label>
-              <Input
-                id="edit-color-number"
-                value={formData.color_number}
-                onChange={(e) => setFormData({ ...formData, color_number: e.target.value })}
               />
             </div>
 
@@ -415,7 +405,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
           <DialogHeader>
             <DialogTitle>Add Stock</DialogTitle>
             <DialogDescription>
-              Add more stock for {yarn.name} - {yarn.color}
+              Add more stock for {yarn.name} - {yarn.colorway}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddStock} className="space-y-4">
@@ -435,13 +425,13 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             <div className="rounded-lg bg-muted p-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current:</span>
-                <span className="font-medium">{yarn.count}</span>
+                <span className="font-medium">{yarn.skein_count}</span>
               </div>
               {stockToAdd && (
                 <div className="flex justify-between mt-1">
                   <span className="text-muted-foreground">New Total:</span>
                   <span className="font-medium">
-                    {yarn.count + (Number.parseInt(stockToAdd) || 0)}
+                    {yarn.skein_count + (Number.parseInt(stockToAdd) || 0)}
                   </span>
                 </div>
               )}

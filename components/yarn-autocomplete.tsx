@@ -85,7 +85,7 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
   }, [debouncedQuery])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

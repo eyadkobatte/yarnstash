@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const ravelryParams = new URLSearchParams([
       ['query', query],
       ['page', '1'],
-      ['page_size', '5'],
+      ['page_size', '10'],
       ['sort', 'best'],
     ]);
     const url = `https://api.ravelry.com/yarns/search.json?${ravelryParams.toString()}`;

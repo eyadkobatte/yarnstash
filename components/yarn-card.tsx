@@ -27,19 +27,23 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import type { Yarn } from "@/lib/types"
 import type { YarnDemand } from "@/lib/yarn-utils"
+import { AuthenticatedImage } from "@/components/authenticated-image"
 
 interface YarnCardProps {
   yarn: Yarn
   demand?: YarnDemand
 }
 
-function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
-  const supabase = createClient()
-  const { data } = supabase.storage.from("yarn-images").getPublicUrl(path)
-
+function DisplayImage({ path, alt, className, width = 500, height = 500 }: { path: string; alt: string; className?: string; width?: number; height?: number }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={data.publicUrl} alt={alt} className={className || "h-full w-full object-cover"} />
+    <AuthenticatedImage 
+      bucket="yarn-images"
+      path={path} 
+      alt={alt} 
+      className={className || "h-full w-full object-cover"} 
+      width={width} 
+      height={height} 
+    />
   )
 }
 
@@ -230,7 +234,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
               {yarn.images.map((img) => (
                 <div key={img.id} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center">
-                    <DisplayImage path={img.storage_path} alt={yarn.name} />
+                    <DisplayImage path={img.storage_path} alt={yarn.name} width={80} height={80} />
                 </div>
               ))}
             </div>
@@ -358,7 +362,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 <div className="flex gap-2 mb-2 flex-wrap">
                   {yarn.images.map((img) => (
                     <div key={img.id} className="relative h-16 w-16 border rounded overflow-hidden group">
-                      <DisplayImage path={img.storage_path} alt="Yarn" className="object-cover w-full h-full" />
+                      <DisplayImage path={img.storage_path} alt="Yarn" className="object-cover w-full h-full" width={64} height={64} />
                       <button
                         type="button"
                         onClick={() => handleDeleteImage(img.id, img.storage_path)}

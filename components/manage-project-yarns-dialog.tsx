@@ -40,6 +40,7 @@ export function ManageProjectYarnsDialog({
   const [selectedYarnId, setSelectedYarnId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [isLoading, setIsLoading] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const router = useRouter();
 
   const handleAddYarn = async () => {
@@ -64,12 +65,14 @@ export function ManageProjectYarnsDialog({
   };
 
   const handleRemoveYarn = async (projectYarnId: string) => {
+    setRemovingId(projectYarnId);
     const supabase = createClient();
     const { error } = await supabase
       .from('project_yarns')
       .delete()
       .eq('id', projectYarnId);
 
+    setRemovingId(null);
     if (!error) {
       router.refresh();
     }
@@ -112,6 +115,7 @@ export function ManageProjectYarnsDialog({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveYarn(py.id)}
+                      disabled={removingId === py.id}
                     >
                       <X className="h-4 w-4" />
                     </Button>

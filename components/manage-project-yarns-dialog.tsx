@@ -3,6 +3,7 @@
 import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +62,8 @@ export function ManageProjectYarnsDialog({
       setSelectedYarnId('');
       setQuantity('1');
       router.refresh();
+    } else {
+      toast.error(error.message);
     }
   };
 
@@ -73,7 +76,9 @@ export function ManageProjectYarnsDialog({
       .eq('id', projectYarnId);
 
     setRemovingId(null);
-    if (!error) {
+    if (error) {
+      toast.error(error.message);
+    } else {
       router.refresh();
     }
   };
@@ -116,6 +121,7 @@ export function ManageProjectYarnsDialog({
                       size="icon"
                       onClick={() => handleRemoveYarn(py.id)}
                       disabled={removingId === py.id}
+                      aria-label={`Remove yarn ${py.id}`}
                     >
                       <X className="h-4 w-4" />
                     </Button>

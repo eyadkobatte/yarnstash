@@ -57,9 +57,6 @@ export default function LoginPage() {
     if (signInError) {
       setError(signInError.message);
       setIsGoogleLoading(false);
-    } else {
-      router.push('/');
-      router.refresh();
     }
   };
 

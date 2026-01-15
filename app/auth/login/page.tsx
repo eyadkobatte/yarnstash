@@ -31,13 +31,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (signInError) {
+      setError(signInError.message);
       setIsLoading(false);
     } else {
       router.push('/');
@@ -48,16 +48,18 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     const supabase = createClient();
     setIsGoogleLoading(true);
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-    } catch (error) {
-      console.error(error);
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (signInError) {
+      setError(signInError.message);
       setIsGoogleLoading(false);
+    } else {
+      router.push('/');
+      router.refresh();
     }
   };
 

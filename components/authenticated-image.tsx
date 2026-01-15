@@ -21,32 +21,44 @@ export function AuthenticatedImage({ bucket, path, alt, ...props }: Authenticate
 
   useEffect(() => {
     let objectUrl: string | null = null
+    let cancelled = false
     const supabase = createClient()
 
     async function loadImage() {
       if (!path) {
-        setLoading(false)
-        setError(true)
+        if (!cancelled) {
+          setLoading(false)
+          setError(true)
+        }
         return
       }
 
       try {
-        setLoading(true)
+        if (!cancelled) setLoading(true)
         // download() automatically uses the current session's JWT in the Authorization header
         const { data, error: downloadError } = await supabase.storage.from(bucket).download(path)
         
+        if (cancelled) return
+
         if (downloadError) throw downloadError
         
         if (data) {
           objectUrl = URL.createObjectURL(data)
-          setUrl(objectUrl)
-          setError(false)
+          if (!cancelled) {
+            setUrl(objectUrl)
+            setError(false)
+          } else {
+             // If cancelled after creation but before setting state, revoke immediately
+             URL.revokeObjectURL(objectUrl)
+          }
         }
       } catch (e) {
-        console.error("Error loading authenticated image:", e)
-        setError(true)
+        if (!cancelled) {
+          console.error("Error loading authenticated image:", e)
+          setError(true)
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -54,6 +66,7 @@ export function AuthenticatedImage({ bucket, path, alt, ...props }: Authenticate
 
     // Cleanup: revoke the object URL to prevent memory leaks
     return () => {
+      cancelled = true
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl)
       }

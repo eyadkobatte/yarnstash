@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +22,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +40,8 @@ export default function LoginPage() {
       setError(error.message);
       setIsLoading(false);
     } else {
-      window.location.href = '/';
+      router.push('/');
+      router.refresh();
     }
   };
 
@@ -77,6 +81,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading || isGoogleLoading}
+                  autoComplete="email"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -89,6 +94,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading || isGoogleLoading}
+                  autoComplete="current-password"
                 />
               </div>
               {error && (

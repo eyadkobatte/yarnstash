@@ -188,6 +188,8 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
     const gramsPerSkein = Number.parseFloat(formData.grams_per_skein) || null;
     const metersPerSkein = Number.parseFloat(formData.meters_per_skein) || null;
     const newSkeinCount = Number.parseFloat(formData.skeins) || 0;
+    const safeGramsPerSkein =
+      gramsPerSkein && gramsPerSkein > 0 ? gramsPerSkein : null;
 
     const { error } = await supabase
       .from('yarns')
@@ -196,7 +198,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
         colorway: formData.colorway,
         skein_count: Math.round(newSkeinCount),
         total_grams: totalGrams || null,
-        grams_per_skein: gramsPerSkein,
+        grams_per_skein: safeGramsPerSkein,
         meters_per_skein: metersPerSkein,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,

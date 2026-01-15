@@ -7,11 +7,11 @@ import {
   Plus,
   Trash2,
   X,
-  Image as ImageIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState } from 'react';
+
 import { AuthenticatedImage } from '@/components/authenticated-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

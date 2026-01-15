@@ -65,8 +65,14 @@ export function ManageProjectYarnsDialog({
 
   const handleRemoveYarn = async (projectYarnId: string) => {
     const supabase = createClient();
-    await supabase.from('project_yarns').delete().eq('id', projectYarnId);
-    router.refresh();
+    const { error } = await supabase
+      .from('project_yarns')
+      .delete()
+      .eq('id', projectYarnId);
+
+    if (!error) {
+      router.refresh();
+    }
   };
 
   const availableYarns = allYarns.filter(

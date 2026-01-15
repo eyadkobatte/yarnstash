@@ -50,7 +50,7 @@ const eslintConfig = defineConfig([
       ],
     },
     rules: {
-      'import/order': [
+      'import-x/order': [
         'error',
         {
           groups: [

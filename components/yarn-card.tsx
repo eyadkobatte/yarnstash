@@ -71,14 +71,20 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
   const [addStockOpen, setAddStockOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stockToAdd, setStockToAdd] = useState('');
-  const [displayUnit, setDisplayUnit] = useState<
-    'grams' | 'meters' | 'yards' | 'skeins'
-  >(yarn.total_grams ? 'grams' : 'skeins');
+  const [displayUnit, setDisplayUnit] = useState<'grams' | 'meters' | 'yards'>(
+    'grams',
+  );
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: yarn.name,
     colorway: yarn.colorway,
     total_grams: yarn.total_grams?.toString() || '',
+    skeins:
+      yarn.grams_per_skein && yarn.total_grams
+        ? (
+            Math.round((yarn.total_grams / yarn.grams_per_skein) * 100) / 100
+          ).toString()
+        : yarn.skein_count.toString(),
     grams_per_skein: yarn.grams_per_skein?.toString() || '',
     meters_per_skein: yarn.meters_per_skein?.toString() || '',
     lot_number: yarn.lot_number || '',
@@ -139,25 +145,23 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
       return;
     }
 
-    const totalGrams = Number.parseInt(formData.total_grams) || 0;
-    const gramsPerSkein = Number.parseInt(formData.grams_per_skein) || null;
-    const metersPerSkein = Number.parseInt(formData.meters_per_skein) || null;
-    const newCount = gramsPerSkein
-      ? Math.round((totalGrams / gramsPerSkein) * 10) / 10
-      : yarn.skein_count;
+    const totalGrams = Number.parseFloat(formData.total_grams) || 0;
+    const gramsPerSkein = Number.parseFloat(formData.grams_per_skein) || null;
+    const metersPerSkein = Number.parseFloat(formData.meters_per_skein) || null;
+    const newSkeinCount = Number.parseFloat(formData.skeins) || 0;
 
     const { error } = await supabase
       .from('yarns')
       .update({
         name: formData.name,
         colorway: formData.colorway,
-        skein_count: Math.round(newCount),
+        skein_count: Math.round(newSkeinCount),
         total_grams: totalGrams || null,
         grams_per_skein: gramsPerSkein,
         meters_per_skein: metersPerSkein,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
-        is_active: totalGrams > 0 || yarn.skein_count > 0,
+        is_active: totalGrams > 0 || newSkeinCount > 0,
         updated_at: new Date().toISOString(),
         ravelry_id: yarn.ravelry_id,
       })
@@ -201,7 +205,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
     setIsLoading(true);
 
     const supabase = createClient();
-    const gramsToAdd = Number.parseInt(stockToAdd) || 0;
+    const gramsToAdd = Number.parseFloat(stockToAdd) || 0;
     const newTotalGrams = (yarn.total_grams || 0) + gramsToAdd;
     const newSkeinCount = yarn.grams_per_skein
       ? Math.round((newTotalGrams / yarn.grams_per_skein) * 10) / 10
@@ -306,16 +310,16 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   variant={yarn.is_active ? 'default' : 'secondary'}
                   className="cursor-pointer"
                   onClick={() => {
-                    const units: Array<
-                      'grams' | 'meters' | 'yards' | 'skeins'
-                    > = ['grams', 'meters', 'yards', 'skeins'];
+                    const units: Array<'grams' | 'meters' | 'yards'> = [
+                      'grams',
+                      'meters',
+                      'yards',
+                    ];
                     const currentIdx = units.indexOf(displayUnit);
                     setDisplayUnit(units[(currentIdx + 1) % units.length]);
                   }}
                 >
-                  {displayUnit === 'grams' &&
-                  yarn.total_grams !== null &&
-                  yarn.total_grams !== undefined
+                  {displayUnit === 'grams' && yarn.total_grams !== null
                     ? `${yarn.total_grams}g`
                     : displayUnit === 'meters' &&
                         yarn.total_grams &&
@@ -327,7 +331,13 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                           yarn.grams_per_skein &&
                           yarn.meters_per_skein
                         ? `${Math.round((yarn.total_grams / yarn.grams_per_skein) * yarn.meters_per_skein * 1.0936)}yd`
-                        : `${yarn.skein_count} ${yarn.skein_count === 1 ? 'skein' : 'skeins'}`}
+                        : yarn.total_grams
+                          ? `${yarn.total_grams}g`
+                          : 'N/A'}
+                </Badge>
+                <Badge variant="outline">
+                  {yarn.skein_count}{' '}
+                  {yarn.skein_count === 1 ? 'skein' : 'skeins'}
                 </Badge>
               </div>
             </div>
@@ -416,18 +426,54 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-total_grams">Total Grams *</Label>
-              <Input
-                id="edit-total_grams"
-                type="number"
-                required
-                min="0"
-                value={formData.total_grams}
-                onChange={(e) =>
-                  setFormData({ ...formData, total_grams: e.target.value })
-                }
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-skeins">Skeins *</Label>
+                <Input
+                  id="edit-skeins"
+                  type="number"
+                  required
+                  min="0"
+                  value={formData.skeins}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const skeins = Number.parseFloat(val);
+                    const gps = Number.parseFloat(formData.grams_per_skein);
+
+                    setFormData({
+                      ...formData,
+                      skeins: val,
+                      total_grams:
+                        skeins && gps
+                          ? String(Math.round(skeins * gps))
+                          : formData.total_grams,
+                    });
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-total_grams">Total Grams</Label>
+                <Input
+                  id="edit-total_grams"
+                  type="number"
+                  min="0"
+                  value={formData.total_grams}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const grams = Number.parseFloat(val);
+                    const gps = Number.parseFloat(formData.grams_per_skein);
+
+                    setFormData({
+                      ...formData,
+                      total_grams: val,
+                      skeins:
+                        grams && gps
+                          ? String(Math.round((grams / gps) * 100) / 100)
+                          : formData.skeins,
+                    });
+                  }}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -438,12 +484,24 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   type="number"
                   min="1"
                   value={formData.grams_per_skein}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      grams_per_skein: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const gps = Number.parseFloat(val);
+                    const skeins = Number.parseFloat(formData.skeins);
+                    const grams = Number.parseFloat(formData.total_grams);
+
+                    let updates: any = { grams_per_skein: val };
+
+                    if (skeins && gps) {
+                      updates.total_grams = String(Math.round(skeins * gps));
+                    } else if (grams && gps) {
+                      updates.skeins = String(
+                        Math.round((grams / gps) * 100) / 100,
+                      );
+                    }
+
+                    setFormData({ ...formData, ...updates });
+                  }}
                   placeholder="e.g., 100"
                 />
               </div>

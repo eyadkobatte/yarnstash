@@ -33,6 +33,7 @@ export function QuickAddYarnButton() {
     name: '',
     colorway: '',
     total_grams: '',
+    skeins: '', // Added for UI helper
     grams_per_skein: '',
     meters_per_skein: '',
     lot_number: '',
@@ -73,6 +74,7 @@ export function QuickAddYarnButton() {
       colorway_id: '',
       grams_per_skein: '',
       meters_per_skein: '',
+      skeins: '',
     }));
 
     setIsFetchingColorways(true);
@@ -202,6 +204,7 @@ export function QuickAddYarnButton() {
       name: '',
       colorway: '',
       total_grams: '',
+      skeins: '',
       grams_per_skein: '',
       meters_per_skein: '',
       lot_number: '',
@@ -276,19 +279,56 @@ export function QuickAddYarnButton() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="total_grams">Total Grams *</Label>
-            <Input
-              id="total_grams"
-              type="number"
-              required
-              min="0"
-              value={formData.total_grams}
-              onChange={(e) =>
-                setFormData({ ...formData, total_grams: e.target.value })
-              }
-              placeholder="Total grams of yarn"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="skeins">Skeins *</Label>
+              <Input
+                id="skeins"
+                type="number"
+                required
+                min="0"
+                value={formData.skeins}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const skeins = Number.parseFloat(val);
+                  const gps = Number.parseFloat(formData.grams_per_skein);
+
+                  setFormData({
+                    ...formData,
+                    skeins: val,
+                    total_grams:
+                      skeins && gps
+                        ? String(Math.round(skeins * gps))
+                        : formData.total_grams,
+                  });
+                }}
+                placeholder="Number of skeins"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="total_grams">Total Grams</Label>
+              <Input
+                id="total_grams"
+                type="number"
+                min="0"
+                value={formData.total_grams}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const grams = Number.parseFloat(val);
+                  const gps = Number.parseFloat(formData.grams_per_skein);
+
+                  setFormData({
+                    ...formData,
+                    total_grams: val,
+                    skeins:
+                      grams && gps
+                        ? String(Math.round((grams / gps) * 100) / 100)
+                        : formData.skeins,
+                  });
+                }}
+                placeholder="Calculated from skeins"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -299,9 +339,24 @@ export function QuickAddYarnButton() {
                 type="number"
                 min="1"
                 value={formData.grams_per_skein}
-                onChange={(e) =>
-                  setFormData({ ...formData, grams_per_skein: e.target.value })
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const gps = Number.parseFloat(val);
+                  const skeins = Number.parseFloat(formData.skeins);
+                  const grams = Number.parseFloat(formData.total_grams);
+
+                  let updates: any = { grams_per_skein: val };
+
+                  if (skeins && gps) {
+                    updates.total_grams = String(Math.round(skeins * gps));
+                  } else if (grams && gps) {
+                    updates.skeins = String(
+                      Math.round((grams / gps) * 100) / 100,
+                    );
+                  }
+
+                  setFormData({ ...formData, ...updates });
+                }}
                 placeholder="e.g., 100"
               />
             </div>

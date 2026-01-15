@@ -11,14 +11,39 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
-    const supabase = createClient();
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
     setIsLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    } else {
+      window.location.href = '/';
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient();
+    setIsGoogleLoading(true);
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -28,7 +53,7 @@ export default function LoginPage() {
       });
     } catch (error) {
       console.error(error);
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -40,14 +65,69 @@ export default function LoginPage() {
             <CardTitle className="text-2xl">Value Your Yarn</CardTitle>
             <CardDescription>Sign in to manage your inventory</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
+            <form onSubmit={handleEmailLogin} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading || isGoogleLoading}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading || isGoogleLoading}
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isGoogleLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign in with Email'
+                )}
+              </Button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
             <Button
               variant="outline"
               className="w-full py-6 text-base font-medium flex items-center justify-center gap-2"
-              onClick={handleLogin}
-              disabled={isLoading}
+              onClick={handleGoogleLogin}
+              disabled={isLoading || isGoogleLoading}
             >
-              {isLoading ? (
+              {isGoogleLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -69,7 +149,7 @@ export default function LoginPage() {
                   />
                 </svg>
               )}
-              {isLoading ? 'Connecting...' : 'Continue with Google'}
+              {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
             </Button>
           </CardContent>
         </Card>

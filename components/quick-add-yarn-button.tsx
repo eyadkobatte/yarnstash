@@ -32,7 +32,10 @@ export function QuickAddYarnButton() {
   const [formData, setFormData] = useState({
     name: '',
     colorway: '',
-    count: '',
+    total_grams: '',
+    skeins: '', // Added for UI helper
+    grams_per_skein: '',
+    meters_per_skein: '',
     lot_number: '',
     notes: '',
     ravelry_id: null as number | null,
@@ -69,6 +72,9 @@ export function QuickAddYarnButton() {
       ravelry_id: yarn.id,
       colorway: '',
       colorway_id: '',
+      grams_per_skein: '',
+      meters_per_skein: '',
+      skeins: '',
     }));
 
     setIsFetchingColorways(true);
@@ -78,7 +84,19 @@ export function QuickAddYarnButton() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.yarn && data.colorways) {
+        if (data.yarn) {
+          // Auto-populate weight specs from Ravelry
+          const yarnData = data.yarn;
+          setFormData((prev) => ({
+            ...prev,
+            grams_per_skein: yarnData.grams ? String(yarnData.grams) : '',
+            // Convert yardage to meters (1 yard = 0.9144 meters)
+            meters_per_skein: yarnData.yardage
+              ? String(Math.round(yarnData.yardage * 0.9144))
+              : '',
+          }));
+        }
+        if (data.colorways) {
           setColorways(data.colorways);
         }
       }
@@ -104,8 +122,9 @@ export function QuickAddYarnButton() {
       alert('Colorway is required');
       return;
     }
-    if (!formData.count || Number.parseInt(formData.count) < 0) {
-      alert('A valid count is required');
+    const skeinsVal = Number.parseFloat(formData.skeins);
+    if (!formData.skeins || isNaN(skeinsVal) || skeinsVal < 0) {
+      alert('Number of skeins is required and must be non-negative');
       return;
     }
 
@@ -122,15 +141,26 @@ export function QuickAddYarnButton() {
       return;
     }
 
+    const totalGrams = Number.parseInt(formData.total_grams) || 0;
+    const gramsPerSkein = Number.parseInt(formData.grams_per_skein) || null;
+    const metersPerSkein = Number.parseInt(formData.meters_per_skein) || null;
+
+    // Calculate raw value first then round once
+    const rawSkeinCount = gramsPerSkein ? totalGrams / gramsPerSkein : 0;
+    const skeinCount = gramsPerSkein ? Math.round(rawSkeinCount * 10) / 10 : 0;
+
     const { data: yarn, error } = await supabase
       .from('yarns')
       .insert({
         name: formData.name,
         colorway: formData.colorway,
-        skein_count: Number.parseInt(formData.count) || 0,
+        skein_count: Math.round(skeinCount),
+        total_grams: totalGrams,
+        grams_per_skein: gramsPerSkein,
+        meters_per_skein: metersPerSkein,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
-        is_active: Number.parseInt(formData.count) > 0,
+        is_active: totalGrams > 0,
         user_id: user.id,
         ravelry_id: formData.ravelry_id,
       })
@@ -175,7 +205,10 @@ export function QuickAddYarnButton() {
     setFormData({
       name: '',
       colorway: '',
-      count: '',
+      total_grams: '',
+      skeins: '',
+      grams_per_skein: '',
+      meters_per_skein: '',
       lot_number: '',
       notes: '',
       ravelry_id: null,
@@ -248,19 +281,102 @@ export function QuickAddYarnButton() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="count">Count *</Label>
-            <Input
-              id="count"
-              type="number"
-              required
-              min="0"
-              value={formData.count}
-              onChange={(e) =>
-                setFormData({ ...formData, count: e.target.value })
-              }
-              placeholder="Number of skeins"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="skeins">Skeins *</Label>
+              <Input
+                id="skeins"
+                type="number"
+                required
+                min="0"
+                value={formData.skeins}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const skeins = Number.parseFloat(val);
+                  const gps = Number.parseFloat(formData.grams_per_skein);
+
+                  setFormData({
+                    ...formData,
+                    skeins: val,
+                    total_grams:
+                      skeins && gps
+                        ? String(Math.round(skeins * gps))
+                        : formData.total_grams,
+                  });
+                }}
+                placeholder="Number of skeins"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="total_grams">Total Grams</Label>
+              <Input
+                id="total_grams"
+                type="number"
+                min="0"
+                value={formData.total_grams}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const grams = Number.parseFloat(val);
+                  const gps = Number.parseFloat(formData.grams_per_skein);
+
+                  setFormData({
+                    ...formData,
+                    total_grams: val,
+                    skeins:
+                      grams && gps
+                        ? String(Math.round((grams / gps) * 100) / 100)
+                        : formData.skeins,
+                  });
+                }}
+                placeholder="Calculated from skeins"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="grams_per_skein">Grams/Skein</Label>
+              <Input
+                id="grams_per_skein"
+                type="number"
+                min="1"
+                value={formData.grams_per_skein}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const gps = Number.parseFloat(val);
+                  const skeins = Number.parseFloat(formData.skeins);
+                  const grams = Number.parseFloat(formData.total_grams);
+
+                  const updates: Partial<typeof formData> = {
+                    grams_per_skein: val,
+                  };
+
+                  if (skeins && gps) {
+                    updates.total_grams = String(Math.round(skeins * gps));
+                  } else if (grams && gps) {
+                    updates.skeins = String(
+                      Math.round((grams / gps) * 100) / 100,
+                    );
+                  }
+
+                  setFormData({ ...formData, ...updates });
+                }}
+                placeholder="e.g., 100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="meters_per_skein">Meters/Skein</Label>
+              <Input
+                id="meters_per_skein"
+                type="number"
+                min="1"
+                value={formData.meters_per_skein}
+                onChange={(e) =>
+                  setFormData({ ...formData, meters_per_skein: e.target.value })
+                }
+                placeholder="e.g., 200"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

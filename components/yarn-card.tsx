@@ -246,7 +246,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
     const gramsToAdd = Number.parseFloat(stockToAdd) || 0;
     const newTotalGrams = (yarn.total_grams || 0) + gramsToAdd;
     const newSkeinCount = yarn.grams_per_skein
-      ? Math.round((newTotalGrams / yarn.grams_per_skein) * 10) / 10
+      ? newTotalGrams / yarn.grams_per_skein
       : yarn.skein_count;
 
     const { error } = await supabase

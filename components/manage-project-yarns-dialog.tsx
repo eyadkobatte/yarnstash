@@ -1,33 +1,35 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { X } from "lucide-react"
+import { X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import type { ProjectWithYarns, Yarn } from "@/lib/types"
+} from '@/components/ui/select';
+import { createClient } from '@/lib/supabase/client';
+import type { ProjectWithYarns, Yarn } from '@/lib/types';
 
 interface ManageProjectYarnsDialogProps {
-  project: ProjectWithYarns
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  allYarns: Yarn[]
+  project: ProjectWithYarns;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  allYarns: Yarn[];
 }
 
 export function ManageProjectYarnsDialog({
@@ -36,48 +38,63 @@ export function ManageProjectYarnsDialog({
   onOpenChange,
   allYarns,
 }: ManageProjectYarnsDialogProps) {
-  const [selectedYarnId, setSelectedYarnId] = useState("")
-  const [quantity, setQuantity] = useState("1")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [selectedYarnId, setSelectedYarnId] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [isLoading, setIsLoading] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleAddYarn = async () => {
-    if (!selectedYarnId) return
+    if (!selectedYarnId) return;
 
-    setIsLoading(true)
-    const supabase = createClient()
+    setIsLoading(true);
+    const supabase = createClient();
 
-    const { error } = await supabase.from("project_yarns").insert({
+    const { error } = await supabase.from('project_yarns').insert({
       project_id: project.id,
       yarn_id: selectedYarnId,
       quantity_needed: Number.parseInt(quantity) || 1,
-    })
+    });
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     if (!error) {
-      setSelectedYarnId("")
-      setQuantity("1")
-      router.refresh()
+      setSelectedYarnId('');
+      setQuantity('1');
+      router.refresh();
+    } else {
+      toast.error(error.message);
     }
-  }
+  };
 
   const handleRemoveYarn = async (projectYarnId: string) => {
-    const supabase = createClient()
-    await supabase.from("project_yarns").delete().eq("id", projectYarnId)
-    router.refresh()
-  }
+    setRemovingId(projectYarnId);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('project_yarns')
+      .delete()
+      .eq('id', projectYarnId);
+
+    setRemovingId(null);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      router.refresh();
+    }
+  };
 
   const availableYarns = allYarns.filter(
-    (yarn) => !project.project_yarns.some((py) => py.yarn_id === yarn.id)
-  )
+    (yarn) => !project.project_yarns.some((py) => py.yarn_id === yarn.id),
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Manage Project Yarns</DialogTitle>
-          <DialogDescription>Add or remove yarns for {project.name}</DialogDescription>
+          <DialogDescription>
+            Add or remove yarns for {project.name}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -99,7 +116,13 @@ export function ManageProjectYarnsDialog({
                         Quantity: {py.quantity_needed}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveYarn(py.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveYarn(py.id)}
+                      disabled={removingId === py.id}
+                      aria-label={`Remove yarn ${py.id}`}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -141,8 +164,11 @@ export function ManageProjectYarnsDialog({
                     placeholder="Quantity"
                   />
                 </div>
-                <Button onClick={handleAddYarn} disabled={!selectedYarnId || isLoading}>
-                  {isLoading ? "Adding..." : "Add"}
+                <Button
+                  onClick={handleAddYarn}
+                  disabled={!selectedYarnId || isLoading}
+                >
+                  {isLoading ? 'Adding...' : 'Add'}
                 </Button>
               </div>
             </div>
@@ -150,5 +176,5 @@ export function ManageProjectYarnsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-import { createClient } from "@/lib/supabase/server"
-import { Navbar } from "@/components/navbar"
-import { CreateProjectButton } from "@/components/create-project-button"
-import { ProjectsGrid } from "@/components/projects-grid"
+import { CreateProjectButton } from '@/components/create-project-button';
+import { Navbar } from '@/components/navbar';
+import { ProjectsGrid } from '@/components/projects-grid';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function ProjectsPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const { data: projects } = await supabase
-    .from("projects")
+    .from('projects')
     .select(
       `
       *,
@@ -16,14 +16,14 @@ export default async function ProjectsPage() {
         yarns (*)
       ),
       images:project_images(*)
-    `
+    `,
     )
-    .order("created_at", { ascending: false })
+    .order('created_at', { ascending: false });
 
   const { data: yarns } = await supabase
-    .from("yarns")
-    .select("*")
-    .order("name", { ascending: true })
+    .from('yarns')
+    .select('*')
+    .order('name', { ascending: true });
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,7 +32,9 @@ export default async function ProjectsPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Projects</h1>
-            <p className="text-muted-foreground">Track your knitting and crochet projects</p>
+            <p className="text-muted-foreground">
+              Track your knitting and crochet projects
+            </p>
           </div>
           <CreateProjectButton />
         </div>
@@ -40,5 +42,5 @@ export default async function ProjectsPage() {
         <ProjectsGrid projects={projects || []} allYarns={yarns || []} />
       </main>
     </div>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Scissors, LogOut } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { Scissors, LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
 
 export function Navbar() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname = usePathname();
+  const router = useRouter();
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+    router.refresh();
+  };
 
   return (
     <nav className="border-b bg-background">
@@ -31,9 +31,9 @@ export function Navbar() {
             <Link
               href="/"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === "/"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                pathname === '/'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
             >
               Yarns
@@ -41,14 +41,19 @@ export function Navbar() {
             <Link
               href="/projects"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === "/projects"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                pathname === '/projects'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
             >
               Projects
             </Link>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="ml-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="ml-2"
+            >
               <LogOut className="h-5 w-5" />
               <span className="sr-only">Logout</span>
             </Button>
@@ -56,5 +61,5 @@ export function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

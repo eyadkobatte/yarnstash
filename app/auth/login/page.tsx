@@ -1,29 +1,36 @@
-"use client"
+'use client';
 
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    const supabase = createClient()
-    setIsLoading(true)
+    const supabase = createClient();
+    setIsLoading(true);
     try {
       await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
     } catch (error) {
-      console.error(error)
-      setIsLoading(false)
+      console.error(error);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
@@ -62,11 +69,11 @@ export default function LoginPage() {
                   />
                 </svg>
               )}
-              {isLoading ? "Connecting..." : "Continue with Google"}
+              {isLoading ? 'Connecting...' : 'Continue with Google'}
             </Button>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

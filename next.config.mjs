@@ -7,13 +7,13 @@ const nextConfig = {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "*.ravelry.com",
-        port: "",
-        pathname: "/**",
+        protocol: 'https',
+        hostname: '*.ravelry.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

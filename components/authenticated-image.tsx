@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Image, { type ImageProps } from 'next/image';
 import { ImageIcon } from 'lucide-react';
+import Image, { type ImageProps } from 'next/image';
+import { useEffect, useState } from 'react';
+
+import { createClient } from '@/lib/supabase/client';
 
 interface AuthenticatedImageProps extends Omit<ImageProps, 'src'> {
   bucket: string;

@@ -40,6 +40,7 @@ export default function LoginPage() {
       setError(signInError.message);
       setIsLoading(false);
     } else {
+      setIsLoading(false);
       router.push('/');
       router.refresh();
     }

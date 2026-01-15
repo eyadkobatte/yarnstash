@@ -44,13 +44,18 @@ interface ProjectCardProps {
   allYarns: Yarn[]
 }
 
-function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
-  const supabase = createClient()
-  const { data } = supabase.storage.from("project-images").getPublicUrl(path)
+import { AuthenticatedImage } from "@/components/authenticated-image"
 
+function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={data.publicUrl} alt={alt} className={className || "h-full w-full object-cover"} />
+    <AuthenticatedImage 
+      bucket="project-images"
+      path={path} 
+      alt={alt} 
+      className={className || "h-full w-full object-cover"} 
+      width={500} 
+      height={500} 
+    />
   )
 }
 

@@ -27,6 +27,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import type { Yarn } from "@/lib/types"
 import type { YarnDemand } from "@/lib/yarn-utils"
+import { AuthenticatedImage } from "@/components/authenticated-image"
 
 interface YarnCardProps {
   yarn: Yarn
@@ -34,12 +35,15 @@ interface YarnCardProps {
 }
 
 function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
-  const supabase = createClient()
-  const { data } = supabase.storage.from("yarn-images").getPublicUrl(path)
-
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={data.publicUrl} alt={alt} className={className || "h-full w-full object-cover"} />
+    <AuthenticatedImage 
+      bucket="yarn-images"
+      path={path} 
+      alt={alt} 
+      className={className || "h-full w-full object-cover"} 
+      width={500} 
+      height={500} 
+    />
   )
 }
 

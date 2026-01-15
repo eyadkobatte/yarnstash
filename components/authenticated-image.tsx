@@ -37,19 +37,19 @@ export function AuthenticatedImage({ bucket, path, alt, ...props }: Authenticate
         if (!cancelled) setLoading(true)
         // download() automatically uses the current session's JWT in the Authorization header
         const { data, error: downloadError } = await supabase.storage.from(bucket).download(path)
-        
+
         if (cancelled) return
 
         if (downloadError) throw downloadError
-        
+
         if (data) {
           objectUrl = URL.createObjectURL(data)
           if (!cancelled) {
             setUrl(objectUrl)
             setError(false)
           } else {
-             // If cancelled after creation but before setting state, revoke immediately
-             URL.revokeObjectURL(objectUrl)
+            // If cancelled after creation but before setting state, revoke immediately
+            URL.revokeObjectURL(objectUrl)
           }
         }
       } catch (e) {
@@ -75,7 +75,7 @@ export function AuthenticatedImage({ bucket, path, alt, ...props }: Authenticate
 
   if (loading) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center bg-muted animate-pulse rounded-md ${props.className || ""}`}
         style={{ width: props.width, height: props.height }}
       >
@@ -86,7 +86,7 @@ export function AuthenticatedImage({ bucket, path, alt, ...props }: Authenticate
 
   if (error || !url) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center bg-muted text-muted-foreground rounded-md ${props.className || ""}`}
         style={{ width: props.width, height: props.height }}
       >

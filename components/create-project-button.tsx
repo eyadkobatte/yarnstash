@@ -153,7 +153,10 @@ export function CreateProjectButton() {
               <div className="space-y-1 mt-2">
                 <p className="text-xs text-muted-foreground mb-1">Selected files:</p>
                 {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs p-2 border rounded-md bg-muted/50">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between text-xs p-2 border rounded-md bg-muted/50"
+                  >
                     <span className="truncate max-w-[200px]">{file.name}</span>
                     <Button
                       type="button"

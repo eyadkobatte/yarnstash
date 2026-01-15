@@ -15,42 +15,39 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Ravelry credentials not configured" }, { status: 500 })
   }
 
-  const auth = Buffer.from(`${username}:${password}`).toString('base64')
+  const auth = Buffer.from(`${username}:${password}`).toString("base64")
 
   try {
     const ravelryParams = new URLSearchParams([
-      ['query', query],
-      ['page', '1'],
-      ['page_size', '10'],
-      ['sort', 'best'],
-    ]);
-    const url = `https://api.ravelry.com/yarns/search.json?${ravelryParams.toString()}`;
-    const response = await fetch(
-      url,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Basic ${auth}`,
-        },
-      }
-    )
+      ["query", query],
+      ["page", "1"],
+      ["page_size", "10"],
+      ["sort", "best"],
+    ])
+    const url = `https://api.ravelry.com/yarns/search.json?${ravelryParams.toString()}`
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${auth}`,
+      },
+    })
 
     if (!response.ok) {
-       const errorBody = await response.text()
-       console.error("Ravelry API Error:", {
-         status: response.status,
-         statusText: response.statusText,
-         headers: Object.fromEntries(response.headers.entries()),
-         body: errorBody,
-         params:ravelryParams
-       })
+      const errorBody = await response.text()
+      console.error("Ravelry API Error:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorBody,
+        params: ravelryParams,
+      })
 
       return NextResponse.json(
         { error: `Ravelry API error: ${response.statusText}`, details: errorBody },
         { status: response.status }
       )
     }
-    
+
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {

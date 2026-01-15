@@ -12,11 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebounce } from "@/lib/hooks/use-debounce"
 import Image from "next/image"
 
@@ -42,7 +38,7 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
   const [query, setQuery] = React.useState("")
   const [yarns, setYarns] = React.useState<RavelryYarn[]>([])
   const [loading, setLoading] = React.useState(false)
-  
+
   const debouncedQuery = useDebounce(query, 300)
 
   React.useEffect(() => {
@@ -99,8 +95,8 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Search yarn..." 
+          <CommandInput
+            placeholder="Search yarn..."
             value={query}
             onValueChange={(val: string) => {
               setQuery(val)
@@ -112,7 +108,9 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
             }}
           />
           <CommandList className="max-h-[300px] overflow-y-auto">
-            <CommandEmpty>{loading ? "Searching..." : "No yarn found (press enter to use raw input)."}</CommandEmpty>
+            <CommandEmpty>
+              {loading ? "Searching..." : "No yarn found (press enter to use raw input)."}
+            </CommandEmpty>
             <CommandGroup>
               {yarns.map((yarn) => (
                 <CommandItem
@@ -127,10 +125,7 @@ export function YarnAutocomplete({ onSelect, onManualInput }: YarnAutocompletePr
                   }}
                 >
                   <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === yarn.id ? "opacity-100" : "opacity-0"
-                    )}
+                    className={cn("mr-2 h-4 w-4", value === yarn.id ? "opacity-100" : "opacity-0")}
                   />
                   <div className="flex items-center gap-2">
                     {yarn.first_photo?.thumbnail_url ? (

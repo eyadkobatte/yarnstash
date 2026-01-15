@@ -47,13 +47,13 @@ interface ProjectCardProps {
 
 function DisplayImage({ path, alt, className }: { path: string; alt: string; className?: string }) {
   return (
-    <AuthenticatedImage 
+    <AuthenticatedImage
       bucket="project-images"
-      path={path} 
-      alt={alt} 
-      className={className || "h-full w-full object-cover"} 
-      width={500} 
-      height={500} 
+      path={path}
+      alt={alt}
+      className={className || "h-full w-full object-cover"}
+      width={500}
+      height={500}
     />
   )
 }
@@ -95,10 +95,7 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
     }
 
     // Delete from db
-    const { error: dbError } = await supabase
-      .from("project_images")
-      .delete()
-      .eq("id", imageId)
+    const { error: dbError } = await supabase.from("project_images").delete().eq("id", imageId)
 
     if (dbError) {
       console.error("Error deleting image link:", dbError)
@@ -113,11 +110,13 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
     setIsLoading(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
-        setIsLoading(false)
-        return
+      setIsLoading(false)
+      return
     }
 
     const { error } = await supabase
@@ -220,8 +219,11 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
           {project.images && project.images.length > 0 && (
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
               {project.images.map((img) => (
-                <div key={img.id} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center">
-                    <DisplayImage path={img.storage_path} alt={project.name} />
+                <div
+                  key={img.id}
+                  className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center"
+                >
+                  <DisplayImage path={img.storage_path} alt={project.name} />
                 </div>
               ))}
             </div>
@@ -253,7 +255,8 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
                   {project.project_yarns.map((py) => {
                     const demand = yarnDemands.get(py.yarn_id)
                     const yarnHasConflict = demand && demand.hasConflict
-                    const hasEnough = py.yarns.is_active && py.yarns.skein_count >= py.quantity_needed
+                    const hasEnough =
+                      py.yarns.is_active && py.yarns.skein_count >= py.quantity_needed
 
                     return (
                       <div key={py.id} className="space-y-1">
@@ -340,8 +343,15 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
               {project.images && project.images.length > 0 && (
                 <div className="flex gap-2 mb-2 flex-wrap">
                   {project.images.map((img) => (
-                    <div key={img.id} className="relative h-16 w-16 border rounded overflow-hidden group">
-                      <DisplayImage path={img.storage_path} alt="Project" className="object-cover w-full h-full" />
+                    <div
+                      key={img.id}
+                      className="relative h-16 w-16 border rounded overflow-hidden group"
+                    >
+                      <DisplayImage
+                        path={img.storage_path}
+                        alt="Project"
+                        className="object-cover w-full h-full"
+                      />
                       <button
                         type="button"
                         onClick={() => handleDeleteImage(img.id, img.storage_path)}
@@ -353,7 +363,7 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
                   ))}
                 </div>
               )}
-              
+
               <Input
                 type="file"
                 accept="image/*"
@@ -363,14 +373,23 @@ export function ProjectCard({ project, yarnDemands, allYarns }: ProjectCardProps
               />
               {newFiles.length > 0 && (
                 <div className="space-y-1 mt-2">
-                   {newFiles.map((file, idx) => (
-                     <div key={idx} className="flex items-center justify-between text-xs p-1 border rounded">
-                       <span className="truncate max-w-[150px]">{file.name}</span>
-                       <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => removeNewFile(idx)}>
-                         <X className="h-3 w-3" />
-                       </Button>
-                     </div>
-                   ))}
+                  {newFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs p-1 border rounded"
+                    >
+                      <span className="truncate max-w-[150px]">{file.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4"
+                        onClick={() => removeNewFile(idx)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

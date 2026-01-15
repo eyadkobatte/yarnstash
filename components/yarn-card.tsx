@@ -3,7 +3,15 @@
 import type React from "react"
 
 import { useState } from "react"
-import { AlertTriangle, MoreVertical, Pencil, Plus, Trash2, X, Image as ImageIcon } from "lucide-react"
+import {
+  AlertTriangle,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+  Image as ImageIcon,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,15 +42,27 @@ interface YarnCardProps {
   demand?: YarnDemand
 }
 
-function DisplayImage({ path, alt, className, width = 500, height = 500 }: { path: string; alt: string; className?: string; width?: number; height?: number }) {
+function DisplayImage({
+  path,
+  alt,
+  className,
+  width = 500,
+  height = 500,
+}: {
+  path: string
+  alt: string
+  className?: string
+  width?: number
+  height?: number
+}) {
   return (
-    <AuthenticatedImage 
+    <AuthenticatedImage
       bucket="yarn-images"
-      path={path} 
-      alt={alt} 
-      className={className || "h-full w-full object-cover"} 
-      width={width} 
-      height={height} 
+      path={path}
+      alt={alt}
+      className={className || "h-full w-full object-cover"}
+      width={width}
+      height={height}
     />
   )
 }
@@ -74,29 +94,24 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
   const handleDeleteImage = async (imageId: string, storagePath: string) => {
     if (!confirm("Delete this image?")) return
-    
+
     setIsLoading(true)
     const supabase = createClient()
-    
+
     // Delete from storage
-    const { error: storageError } = await supabase.storage
-      .from("yarn-images")
-      .remove([storagePath])
-      
+    const { error: storageError } = await supabase.storage.from("yarn-images").remove([storagePath])
+
     if (storageError) {
       console.error("Error deleting image from storage:", storageError)
     }
 
     // Delete from db
-    const { error: dbError } = await supabase
-      .from("yarn_images")
-      .delete()
-      .eq("id", imageId)
+    const { error: dbError } = await supabase.from("yarn_images").delete().eq("id", imageId)
 
     if (dbError) {
       console.error("Error deleting image link:", dbError)
     }
-    
+
     setIsLoading(false)
     router.refresh()
   }
@@ -106,11 +121,13 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
     setIsLoading(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     if (!user) {
-        setIsLoading(false)
-        return
+      setIsLoading(false)
+      return
     }
 
     const newCount = Number.parseInt(formData.count) || 0
@@ -233,8 +250,11 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
           {yarn.images && yarn.images.length > 0 && (
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
               {yarn.images.map((img) => (
-                <div key={img.id} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center">
-                    <DisplayImage path={img.storage_path} alt={yarn.name} width={80} height={80} />
+                <div
+                  key={img.id}
+                  className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center"
+                >
+                  <DisplayImage path={img.storage_path} alt={yarn.name} width={80} height={80} />
                 </div>
               ))}
             </div>
@@ -278,7 +298,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             {yarn.ravelry_id && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Ravelry ID:</span>
-                <span className="text-sm font-medium text-muted-foreground">#{yarn.ravelry_id}</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  #{yarn.ravelry_id}
+                </span>
               </div>
             )}
 
@@ -361,8 +383,17 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               {yarn.images && yarn.images.length > 0 && (
                 <div className="flex gap-2 mb-2 flex-wrap">
                   {yarn.images.map((img) => (
-                    <div key={img.id} className="relative h-16 w-16 border rounded overflow-hidden group">
-                      <DisplayImage path={img.storage_path} alt="Yarn" className="object-cover w-full h-full" width={64} height={64} />
+                    <div
+                      key={img.id}
+                      className="relative h-16 w-16 border rounded overflow-hidden group"
+                    >
+                      <DisplayImage
+                        path={img.storage_path}
+                        alt="Yarn"
+                        className="object-cover w-full h-full"
+                        width={64}
+                        height={64}
+                      />
                       <button
                         type="button"
                         onClick={() => handleDeleteImage(img.id, img.storage_path)}
@@ -374,7 +405,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   ))}
                 </div>
               )}
-              
+
               <Input
                 type="file"
                 accept="image/*"
@@ -384,14 +415,23 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               />
               {newFiles.length > 0 && (
                 <div className="space-y-1 mt-2">
-                   {newFiles.map((file, idx) => (
-                     <div key={idx} className="flex items-center justify-between text-xs p-1 border rounded">
-                       <span className="truncate max-w-[150px]">{file.name}</span>
-                       <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => removeNewFile(idx)}>
-                         <X className="h-3 w-3" />
-                       </Button>
-                     </div>
-                   ))}
+                  {newFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs p-1 border rounded"
+                    >
+                      <span className="truncate max-w-[150px]">{file.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4"
+                        onClick={() => removeNewFile(idx)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

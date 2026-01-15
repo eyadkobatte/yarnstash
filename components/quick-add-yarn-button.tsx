@@ -70,16 +70,16 @@ export function QuickAddYarnButton() {
     setIsFetchingColorways(true)
     try {
       const res = await fetch(`/api/ravelry/yarns/${yarn.id}`, {
-        signal: controller.signal
+        signal: controller.signal,
       })
       if (res.ok) {
         const data = await res.json()
         if (data.yarn && data.colorways) {
-            setColorways(data.colorways)
+          setColorways(data.colorways)
         }
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
+      if (error instanceof Error && error.name === "AbortError") return
       console.error("Failed to fetch colorways:", error)
     } finally {
       if (colorwayAbortRef.current === controller) {
@@ -90,7 +90,7 @@ export function QuickAddYarnButton() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validate required fields
     if (!formData.name.trim()) {
       alert("Yarn name is required")
@@ -104,7 +104,7 @@ export function QuickAddYarnButton() {
       alert("A valid count is required")
       return
     }
-    
+
     setIsLoading(true)
 
     const supabase = createClient()
@@ -209,21 +209,21 @@ export function QuickAddYarnButton() {
               colorways={colorways}
               onSelect={(colorway) => {
                 if (colorway) {
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
                     colorway: colorway.name ? `${colorway.code} - ${colorway.name}` : colorway.code,
-                    colorway_id: colorway.id.toString()
+                    colorway_id: colorway.id.toString(),
                   }))
                 } else {
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
                     colorway: "",
-                    colorway_id: ""
+                    colorway_id: "",
                   }))
                 }
               }}
               onManualInput={(val) => {
-                setFormData(prev => ({ ...prev, colorway: val, colorway_id: "" }))
+                setFormData((prev) => ({ ...prev, colorway: val, colorway_id: "" }))
               }}
               disabled={isFetchingColorways}
             />
@@ -276,7 +276,10 @@ export function QuickAddYarnButton() {
             {files.length > 0 && (
               <div className="space-y-2">
                 {files.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 text-sm border rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 text-sm border rounded"
+                  >
                     <span className="truncate max-w-[200px]">{file.name}</span>
                     <Button
                       type="button"

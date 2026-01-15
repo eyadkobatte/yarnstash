@@ -17,9 +17,7 @@ export function ProjectsGrid({ projects, allYarns }: ProjectsGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-lg text-muted-foreground mb-4">No projects yet</p>
-        <p className="text-sm text-muted-foreground">
-          Create your first project to get started
-        </p>
+        <p className="text-sm text-muted-foreground">Create your first project to get started</p>
       </div>
     )
   }

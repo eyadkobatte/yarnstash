@@ -12,11 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export interface RavelryColorway {
   id: number
@@ -31,7 +27,12 @@ interface ColorwayAutocompleteProps {
   disabled?: boolean
 }
 
-export function ColorwayAutocomplete({ colorways, onSelect, onManualInput, disabled }: ColorwayAutocompleteProps) {
+export function ColorwayAutocomplete({
+  colorways,
+  onSelect,
+  onManualInput,
+  disabled,
+}: ColorwayAutocompleteProps) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState<string>("")
   const [query, setQuery] = React.useState("")
@@ -60,8 +61,8 @@ export function ColorwayAutocomplete({ colorways, onSelect, onManualInput, disab
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command shouldFilter={true}>
-          <CommandInput 
-            placeholder="Search colorway..." 
+          <CommandInput
+            placeholder="Search colorway..."
             value={query}
             onValueChange={(val: string) => {
               setQuery(val)

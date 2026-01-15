@@ -122,8 +122,9 @@ export function QuickAddYarnButton() {
       alert('Colorway is required');
       return;
     }
-    if (!formData.total_grams || Number.parseInt(formData.total_grams) < 0) {
-      alert('Total grams is required');
+    const skeinsVal = Number.parseFloat(formData.skeins);
+    if (!formData.skeins || isNaN(skeinsVal) || skeinsVal < 0) {
+      alert('Number of skeins is required and must be non-negative');
       return;
     }
 
@@ -143,9 +144,10 @@ export function QuickAddYarnButton() {
     const totalGrams = Number.parseInt(formData.total_grams) || 0;
     const gramsPerSkein = Number.parseInt(formData.grams_per_skein) || null;
     const metersPerSkein = Number.parseInt(formData.meters_per_skein) || null;
-    const skeinCount = gramsPerSkein
-      ? Math.round((totalGrams / gramsPerSkein) * 10) / 10
-      : 0;
+
+    // Calculate raw value first then round once
+    const rawSkeinCount = gramsPerSkein ? totalGrams / gramsPerSkein : 0;
+    const skeinCount = gramsPerSkein ? Math.round(rawSkeinCount * 10) / 10 : 0;
 
     const { data: yarn, error } = await supabase
       .from('yarns')
@@ -345,7 +347,9 @@ export function QuickAddYarnButton() {
                   const skeins = Number.parseFloat(formData.skeins);
                   const grams = Number.parseFloat(formData.total_grams);
 
-                  let updates: any = { grams_per_skein: val };
+                  const updates: Partial<typeof formData> = {
+                    grams_per_skein: val,
+                  };
 
                   if (skeins && gps) {
                     updates.total_grams = String(Math.round(skeins * gps));

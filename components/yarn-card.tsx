@@ -41,6 +41,45 @@ interface YarnCardProps {
   demand?: YarnDemand;
 }
 
+function getDisplayValue(
+  displayUnit: 'grams' | 'meters' | 'yards',
+  yarn: Yarn,
+): string {
+  if (displayUnit === 'grams') {
+    return yarn.total_grams !== null ? `${yarn.total_grams}g` : 'N/A';
+  }
+
+  // Check if we have necessary data for conversion
+  const canConvert =
+    yarn.total_grams !== null &&
+    yarn.grams_per_skein !== null &&
+    yarn.meters_per_skein !== null;
+
+  if (!canConvert) {
+    // Fallback to grams if conversion not possible, or N/A
+    return yarn.total_grams !== null ? `${yarn.total_grams}g` : 'N/A';
+  }
+
+  // We know these are numbers now due to checks above
+  const totalGrams = yarn.total_grams!;
+  const gramsPerSkein = yarn.grams_per_skein!;
+  const metersPerSkein = yarn.meters_per_skein!;
+
+  if (displayUnit === 'meters') {
+    const meters = Math.round((totalGrams / gramsPerSkein) * metersPerSkein);
+    return `${meters}m`;
+  }
+
+  if (displayUnit === 'yards') {
+    const yards = Math.round(
+      (totalGrams / gramsPerSkein) * metersPerSkein * 1.0936,
+    );
+    return `${yards}yd`;
+  }
+
+  return 'N/A';
+}
+
 function DisplayImage({
   path,
   alt,
@@ -163,7 +202,6 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
         notes: formData.notes || null,
         is_active: totalGrams > 0 || newSkeinCount > 0,
         updated_at: new Date().toISOString(),
-        ravelry_id: yarn.ravelry_id,
       })
       .eq('id', yarn.id);
 
@@ -319,21 +357,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                     setDisplayUnit(units[(currentIdx + 1) % units.length]);
                   }}
                 >
-                  {displayUnit === 'grams' && yarn.total_grams !== null
-                    ? `${yarn.total_grams}g`
-                    : displayUnit === 'meters' &&
-                        yarn.total_grams &&
-                        yarn.grams_per_skein &&
-                        yarn.meters_per_skein
-                      ? `${Math.round((yarn.total_grams / yarn.grams_per_skein) * yarn.meters_per_skein)}m`
-                      : displayUnit === 'yards' &&
-                          yarn.total_grams &&
-                          yarn.grams_per_skein &&
-                          yarn.meters_per_skein
-                        ? `${Math.round((yarn.total_grams / yarn.grams_per_skein) * yarn.meters_per_skein * 1.0936)}yd`
-                        : yarn.total_grams
-                          ? `${yarn.total_grams}g`
-                          : 'N/A'}
+                  {getDisplayValue(displayUnit, yarn)}
                 </Badge>
                 <Badge variant="outline">
                   {yarn.skein_count}{' '}
@@ -490,7 +514,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                     const skeins = Number.parseFloat(formData.skeins);
                     const grams = Number.parseFloat(formData.total_grams);
 
-                    let updates: any = { grams_per_skein: val };
+                    const updates: Partial<typeof formData> = {
+                      grams_per_skein: val,
+                    };
 
                     if (skeins && gps) {
                       updates.total_grams = String(Math.round(skeins * gps));
@@ -648,7 +674,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   <span className="text-muted-foreground">New Total:</span>
                   <span className="font-medium">
                     {(yarn.total_grams || 0) +
-                      (Number.parseInt(stockToAdd) || 0)}
+                      (Number.parseFloat(stockToAdd) || 0)}
                     g
                   </span>
                 </div>

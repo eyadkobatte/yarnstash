@@ -39,7 +39,7 @@
 
 ```tsx
 interface YarnCardProps {
-  yarn: Yarn
+  yarn: Yarn;
 }
 
 export function YarnCard({ yarn }: YarnCardProps) {
@@ -84,13 +84,13 @@ export function YarnCard({ yarn }: YarnCardProps) {
 
 ```tsx
 // app/page.tsx
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from '@/lib/supabase/server';
 
 export default async function Page() {
-  const supabase = await createClient()
-  const { data } = await supabase.from("yarns").select("*")
+  const supabase = await createClient();
+  const { data } = await supabase.from('yarns').select('*');
 
-  return <YarnList yarns={data} />
+  return <YarnList yarns={data} />;
 }
 ```
 
@@ -102,20 +102,20 @@ export default async function Page() {
 
 ```tsx
 // component.tsx
-"use client"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+'use client';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export function DeleteButton({ id }: { id: string }) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleDelete = async () => {
-    const supabase = createClient()
-    await supabase.from("table").delete().eq("id", id)
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.from('table').delete().eq('id', id);
+    router.refresh();
+  };
 
-  return <Button onClick={handleDelete}>Delete</Button>
+  return <Button onClick={handleDelete}>Delete</Button>;
 }
 ```
 
@@ -135,8 +135,8 @@ export function DeleteButton({ id }: { id: string }) {
   4. Utilities & Types (`@/lib/...`)
 
 ```tsx
-import { useState } from "react" // External
-import { Button } from "@/components/ui/button" // UI
-import { YarnCard } from "@/components/yarn-card" // Feature
-import type { Yarn } from "@/lib/types" // Internal Utils
+import { useState } from 'react'; // External
+import { Button } from '@/components/ui/button'; // UI
+import { YarnCard } from '@/components/yarn-card'; // Feature
+import type { Yarn } from '@/lib/types'; // Internal Utils
 ```

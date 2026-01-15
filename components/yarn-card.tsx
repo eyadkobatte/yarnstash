@@ -1,8 +1,5 @@
-"use client"
+'use client';
 
-import type React from "react"
-
-import { useState } from "react"
 import {
   AlertTriangle,
   MoreVertical,
@@ -11,35 +8,37 @@ import {
   Trash2,
   X,
   Image as ImageIcon,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState } from 'react';
+import { AuthenticatedImage } from '@/components/authenticated-image';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import type { Yarn } from "@/lib/types"
-import type { YarnDemand } from "@/lib/yarn-utils"
-import { AuthenticatedImage } from "@/components/authenticated-image"
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@/lib/supabase/client';
+import type { Yarn } from '@/lib/types';
+import type { YarnDemand } from '@/lib/yarn-utils';
 
 interface YarnCardProps {
-  yarn: Yarn
-  demand?: YarnDemand
+  yarn: Yarn;
+  demand?: YarnDemand;
 }
 
 function DisplayImage({
@@ -49,91 +48,96 @@ function DisplayImage({
   width = 500,
   height = 500,
 }: {
-  path: string
-  alt: string
-  className?: string
-  width?: number
-  height?: number
+  path: string;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
 }) {
   return (
     <AuthenticatedImage
       bucket="yarn-images"
       path={path}
       alt={alt}
-      className={className || "h-full w-full object-cover"}
+      className={className || 'h-full w-full object-cover'}
       width={width}
       height={height}
     />
-  )
+  );
 }
 
 export function YarnCard({ yarn, demand }: YarnCardProps) {
-  const [editOpen, setEditOpen] = useState(false)
-  const [addStockOpen, setAddStockOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [stockToAdd, setStockToAdd] = useState("")
-  const [newFiles, setNewFiles] = useState<File[]>([])
+  const [editOpen, setEditOpen] = useState(false);
+  const [addStockOpen, setAddStockOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [stockToAdd, setStockToAdd] = useState('');
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: yarn.name,
     colorway: yarn.colorway,
     count: yarn.skein_count.toString(),
-    lot_number: yarn.lot_number || "",
-    notes: yarn.notes || "",
-  })
-  const router = useRouter()
+    lot_number: yarn.lot_number || '',
+    notes: yarn.notes || '',
+  });
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setNewFiles(Array.from(e.target.files))
+      setNewFiles(Array.from(e.target.files));
     }
-  }
+  };
 
   const removeNewFile = (index: number) => {
-    setNewFiles(newFiles.filter((_, i) => i !== index))
-  }
+    setNewFiles(newFiles.filter((_, i) => i !== index));
+  };
 
   const handleDeleteImage = async (imageId: string, storagePath: string) => {
-    if (!confirm("Delete this image?")) return
+    if (!confirm('Delete this image?')) return;
 
-    setIsLoading(true)
-    const supabase = createClient()
+    setIsLoading(true);
+    const supabase = createClient();
 
     // Delete from storage
-    const { error: storageError } = await supabase.storage.from("yarn-images").remove([storagePath])
+    const { error: storageError } = await supabase.storage
+      .from('yarn-images')
+      .remove([storagePath]);
 
     if (storageError) {
-      console.error("Error deleting image from storage:", storageError)
+      console.error('Error deleting image from storage:', storageError);
     }
 
     // Delete from db
-    const { error: dbError } = await supabase.from("yarn_images").delete().eq("id", imageId)
+    const { error: dbError } = await supabase
+      .from('yarn_images')
+      .delete()
+      .eq('id', imageId);
 
     if (dbError) {
-      console.error("Error deleting image link:", dbError)
+      console.error('Error deleting image link:', dbError);
     }
 
-    setIsLoading(false)
-    router.refresh()
-  }
+    setIsLoading(false);
+    router.refresh();
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    const supabase = createClient()
+    const supabase = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      setIsLoading(false)
-      return
+      setIsLoading(false);
+      return;
     }
 
-    const newCount = Number.parseInt(formData.count) || 0
+    const newCount = Number.parseInt(formData.count) || 0;
 
     const { error } = await supabase
-      .from("yarns")
+      .from('yarns')
       .update({
         name: formData.name,
         colorway: formData.colorway,
@@ -144,78 +148,78 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
         updated_at: new Date().toISOString(),
         ravelry_id: yarn.ravelry_id, // Preserve ravelry_id
       })
-      .eq("id", yarn.id)
+      .eq('id', yarn.id);
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     // Upload newly selected images
     if (newFiles.length > 0) {
       for (const file of newFiles) {
-        const fileExt = file.name.split(".").pop()
-        const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from("yarn-images")
-          .upload(fileName, file)
+          .from('yarn-images')
+          .upload(fileName, file);
 
         if (uploadError) {
-          console.error("Error uploading image:", uploadError)
-          continue
+          console.error('Error uploading image:', uploadError);
+          continue;
         }
 
-        await supabase.from("yarn_images").insert({
+        await supabase.from('yarn_images').insert({
           yarn_id: yarn.id,
           storage_path: fileName,
-        })
+        });
       }
     }
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     if (!error) {
-      setEditOpen(false)
-      setNewFiles([])
-      router.refresh()
+      setEditOpen(false);
+      setNewFiles([]);
+      router.refresh();
     }
-  }
+  };
 
   const handleAddStock = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    const supabase = createClient()
-    const amountToAdd = Number.parseInt(stockToAdd) || 0
-    const newCount = yarn.skein_count + amountToAdd
+    const supabase = createClient();
+    const amountToAdd = Number.parseInt(stockToAdd) || 0;
+    const newCount = yarn.skein_count + amountToAdd;
 
     const { error } = await supabase
-      .from("yarns")
+      .from('yarns')
       .update({
         skein_count: newCount,
         is_active: newCount > 0,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", yarn.id)
+      .eq('id', yarn.id);
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     if (!error) {
-      setStockToAdd("")
-      setAddStockOpen(false)
-      router.refresh()
+      setStockToAdd('');
+      setAddStockOpen(false);
+      router.refresh();
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this yarn?")) return
+    if (!confirm('Are you sure you want to delete this yarn?')) return;
 
-    const supabase = createClient()
-    await supabase.from("yarns").delete().eq("id", yarn.id)
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.from('yarns').delete().eq('id', yarn.id);
+    router.refresh();
+  };
 
   return (
     <>
-      <Card className={!yarn.is_active ? "opacity-60" : ""}>
+      <Card className={!yarn.is_active ? 'opacity-60' : ''}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -238,7 +242,10 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   <Plus className="mr-2 h-4 w-4" />
                   Add Stock
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  className="text-destructive"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
@@ -254,7 +261,12 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                   key={img.id}
                   className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border text-center"
                 >
-                  <DisplayImage path={img.storage_path} alt={yarn.name} width={80} height={80} />
+                  <DisplayImage
+                    path={img.storage_path}
+                    alt={yarn.name}
+                    width={80}
+                    height={80}
+                  />
                 </div>
               ))}
             </div>
@@ -264,23 +276,29 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               <div className="flex items-center gap-2 p-2 bg-destructive/10 rounded-md">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
                 <span className="text-xs font-medium text-destructive">
-                  {demand.totalDemand} needed, only {demand.availableCount} available
+                  {demand.totalDemand} needed, only {demand.availableCount}{' '}
+                  available
                 </span>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">In Stock:</span>
-              <Badge variant={yarn.is_active ? "default" : "secondary"}>
-                {yarn.skein_count} {yarn.skein_count === 1 ? "skein" : "skeins"}
+              <Badge variant={yarn.is_active ? 'default' : 'secondary'}>
+                {yarn.skein_count} {yarn.skein_count === 1 ? 'skein' : 'skeins'}
               </Badge>
             </div>
 
             {demand && demand.projectDemands.length > 0 && (
               <div className="pt-2 border-t">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Used in projects:</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  Used in projects:
+                </p>
                 {demand.projectDemands.map((pd) => (
-                  <div key={pd.projectId} className="flex items-center justify-between text-xs">
+                  <div
+                    key={pd.projectId}
+                    className="flex items-center justify-between text-xs"
+                  >
                     <span>{pd.projectName}</span>
                     <span className="text-muted-foreground">{pd.quantity}</span>
                   </div>
@@ -290,14 +308,18 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
             {yarn.lot_number && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Lot Number:</span>
+                <span className="text-sm text-muted-foreground">
+                  Lot Number:
+                </span>
                 <span className="text-sm font-medium">{yarn.lot_number}</span>
               </div>
             )}
 
             {yarn.ravelry_id && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Ravelry ID:</span>
+                <span className="text-sm text-muted-foreground">
+                  Ravelry ID:
+                </span>
                 <span className="text-sm font-medium text-muted-foreground">
                   #{yarn.ravelry_id}
                 </span>
@@ -333,7 +355,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 id="edit-name"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -343,7 +367,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 id="edit-colorway"
                 required
                 value={formData.colorway}
-                onChange={(e) => setFormData({ ...formData, colorway: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, colorway: e.target.value })
+                }
               />
             </div>
 
@@ -355,7 +381,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 required
                 min="0"
                 value={formData.count}
-                onChange={(e) => setFormData({ ...formData, count: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, count: e.target.value })
+                }
               />
             </div>
 
@@ -364,7 +392,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               <Input
                 id="edit-lot-number"
                 value={formData.lot_number}
-                onChange={(e) => setFormData({ ...formData, lot_number: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, lot_number: e.target.value })
+                }
               />
             </div>
 
@@ -373,7 +403,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
               <Textarea
                 id="edit-notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 rows={3}
               />
             </div>
@@ -396,7 +428,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                       />
                       <button
                         type="button"
-                        onClick={() => handleDeleteImage(img.id, img.storage_path)}
+                        onClick={() =>
+                          handleDeleteImage(img.id, img.storage_path)
+                        }
                         className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="h-4 w-4 text-white" />
@@ -420,7 +454,9 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                       key={idx}
                       className="flex items-center justify-between text-xs p-1 border rounded"
                     >
-                      <span className="truncate max-w-[150px]">{file.name}</span>
+                      <span className="truncate max-w-[150px]">
+                        {file.name}
+                      </span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -437,7 +473,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Yarn"}
+              {isLoading ? 'Updating...' : 'Update Yarn'}
             </Button>
           </form>
         </DialogContent>
@@ -482,11 +518,11 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Stock"}
+              {isLoading ? 'Adding...' : 'Add Stock'}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

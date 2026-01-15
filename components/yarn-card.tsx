@@ -71,11 +71,16 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
   const [addStockOpen, setAddStockOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stockToAdd, setStockToAdd] = useState('');
+  const [displayUnit, setDisplayUnit] = useState<
+    'grams' | 'meters' | 'yards' | 'skeins'
+  >(yarn.total_grams ? 'grams' : 'skeins');
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: yarn.name,
     colorway: yarn.colorway,
-    count: yarn.skein_count.toString(),
+    total_grams: yarn.total_grams?.toString() || '',
+    grams_per_skein: yarn.grams_per_skein?.toString() || '',
+    meters_per_skein: yarn.meters_per_skein?.toString() || '',
     lot_number: yarn.lot_number || '',
     notes: yarn.notes || '',
   });
@@ -134,19 +139,27 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
       return;
     }
 
-    const newCount = Number.parseInt(formData.count) || 0;
+    const totalGrams = Number.parseInt(formData.total_grams) || 0;
+    const gramsPerSkein = Number.parseInt(formData.grams_per_skein) || null;
+    const metersPerSkein = Number.parseInt(formData.meters_per_skein) || null;
+    const newCount = gramsPerSkein
+      ? Math.round((totalGrams / gramsPerSkein) * 10) / 10
+      : yarn.skein_count;
 
     const { error } = await supabase
       .from('yarns')
       .update({
         name: formData.name,
         colorway: formData.colorway,
-        skein_count: newCount,
+        skein_count: Math.round(newCount),
+        total_grams: totalGrams || null,
+        grams_per_skein: gramsPerSkein,
+        meters_per_skein: metersPerSkein,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
-        is_active: newCount > 0,
+        is_active: totalGrams > 0 || yarn.skein_count > 0,
         updated_at: new Date().toISOString(),
-        ravelry_id: yarn.ravelry_id, // Preserve ravelry_id
+        ravelry_id: yarn.ravelry_id,
       })
       .eq('id', yarn.id);
 
@@ -188,14 +201,18 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
     setIsLoading(true);
 
     const supabase = createClient();
-    const amountToAdd = Number.parseInt(stockToAdd) || 0;
-    const newCount = yarn.skein_count + amountToAdd;
+    const gramsToAdd = Number.parseInt(stockToAdd) || 0;
+    const newTotalGrams = (yarn.total_grams || 0) + gramsToAdd;
+    const newSkeinCount = yarn.grams_per_skein
+      ? Math.round((newTotalGrams / yarn.grams_per_skein) * 10) / 10
+      : yarn.skein_count;
 
     const { error } = await supabase
       .from('yarns')
       .update({
-        skein_count: newCount,
-        is_active: newCount > 0,
+        total_grams: newTotalGrams,
+        skein_count: Math.round(newSkeinCount),
+        is_active: newTotalGrams > 0,
         updated_at: new Date().toISOString(),
       })
       .eq('id', yarn.id);
@@ -284,9 +301,35 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">In Stock:</span>
-              <Badge variant={yarn.is_active ? 'default' : 'secondary'}>
-                {yarn.skein_count} {yarn.skein_count === 1 ? 'skein' : 'skeins'}
-              </Badge>
+              <div className="flex items-center gap-1">
+                <Badge
+                  variant={yarn.is_active ? 'default' : 'secondary'}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    const units: Array<
+                      'grams' | 'meters' | 'yards' | 'skeins'
+                    > = ['grams', 'meters', 'yards', 'skeins'];
+                    const currentIdx = units.indexOf(displayUnit);
+                    setDisplayUnit(units[(currentIdx + 1) % units.length]);
+                  }}
+                >
+                  {displayUnit === 'grams' &&
+                  yarn.total_grams !== null &&
+                  yarn.total_grams !== undefined
+                    ? `${yarn.total_grams}g`
+                    : displayUnit === 'meters' &&
+                        yarn.total_grams &&
+                        yarn.grams_per_skein &&
+                        yarn.meters_per_skein
+                      ? `${Math.round((yarn.total_grams / yarn.grams_per_skein) * yarn.meters_per_skein)}m`
+                      : displayUnit === 'yards' &&
+                          yarn.total_grams &&
+                          yarn.grams_per_skein &&
+                          yarn.meters_per_skein
+                        ? `${Math.round((yarn.total_grams / yarn.grams_per_skein) * yarn.meters_per_skein * 1.0936)}yd`
+                        : `${yarn.skein_count} ${yarn.skein_count === 1 ? 'skein' : 'skeins'}`}
+                </Badge>
+              </div>
             </div>
 
             {demand && demand.projectDemands.length > 0 && (
@@ -374,17 +417,52 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-count">Count *</Label>
+              <Label htmlFor="edit-total_grams">Total Grams *</Label>
               <Input
-                id="edit-count"
+                id="edit-total_grams"
                 type="number"
                 required
                 min="0"
-                value={formData.count}
+                value={formData.total_grams}
                 onChange={(e) =>
-                  setFormData({ ...formData, count: e.target.value })
+                  setFormData({ ...formData, total_grams: e.target.value })
                 }
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-grams_per_skein">Grams/Skein</Label>
+                <Input
+                  id="edit-grams_per_skein"
+                  type="number"
+                  min="1"
+                  value={formData.grams_per_skein}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      grams_per_skein: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., 100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-meters_per_skein">Meters/Skein</Label>
+                <Input
+                  id="edit-meters_per_skein"
+                  type="number"
+                  min="1"
+                  value={formData.meters_per_skein}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      meters_per_skein: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., 200"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -490,7 +568,7 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
           </DialogHeader>
           <form onSubmit={handleAddStock} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="stock-amount">Amount to Add *</Label>
+              <Label htmlFor="stock-amount">Grams to Add *</Label>
               <Input
                 id="stock-amount"
                 type="number"
@@ -498,20 +576,22 @@ export function YarnCard({ yarn, demand }: YarnCardProps) {
                 min="1"
                 value={stockToAdd}
                 onChange={(e) => setStockToAdd(e.target.value)}
-                placeholder="Number of skeins to add"
+                placeholder="Grams to add"
               />
             </div>
 
             <div className="rounded-lg bg-muted p-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current:</span>
-                <span className="font-medium">{yarn.skein_count}</span>
+                <span className="font-medium">{yarn.total_grams || 0}g</span>
               </div>
               {stockToAdd && (
                 <div className="flex justify-between mt-1">
                   <span className="text-muted-foreground">New Total:</span>
                   <span className="font-medium">
-                    {yarn.skein_count + (Number.parseInt(stockToAdd) || 0)}
+                    {(yarn.total_grams || 0) +
+                      (Number.parseInt(stockToAdd) || 0)}
+                    g
                   </span>
                 </div>
               )}

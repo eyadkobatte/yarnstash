@@ -10,6 +10,9 @@ export interface Yarn {
   name: string;
   colorway: string;
   skein_count: number;
+  total_grams?: number | null;
+  grams_per_skein?: number | null;
+  meters_per_skein?: number | null;
   lot_number?: string | null;
   notes?: string | null;
   is_active: boolean;

@@ -32,7 +32,9 @@ export function QuickAddYarnButton() {
   const [formData, setFormData] = useState({
     name: '',
     colorway: '',
-    count: '',
+    total_grams: '',
+    grams_per_skein: '',
+    meters_per_skein: '',
     lot_number: '',
     notes: '',
     ravelry_id: null as number | null,
@@ -69,6 +71,8 @@ export function QuickAddYarnButton() {
       ravelry_id: yarn.id,
       colorway: '',
       colorway_id: '',
+      grams_per_skein: '',
+      meters_per_skein: '',
     }));
 
     setIsFetchingColorways(true);
@@ -78,7 +82,19 @@ export function QuickAddYarnButton() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.yarn && data.colorways) {
+        if (data.yarn) {
+          // Auto-populate weight specs from Ravelry
+          const yarnData = data.yarn;
+          setFormData((prev) => ({
+            ...prev,
+            grams_per_skein: yarnData.grams ? String(yarnData.grams) : '',
+            // Convert yardage to meters (1 yard = 0.9144 meters)
+            meters_per_skein: yarnData.yardage
+              ? String(Math.round(yarnData.yardage * 0.9144))
+              : '',
+          }));
+        }
+        if (data.colorways) {
           setColorways(data.colorways);
         }
       }
@@ -104,8 +120,8 @@ export function QuickAddYarnButton() {
       alert('Colorway is required');
       return;
     }
-    if (!formData.count || Number.parseInt(formData.count) < 0) {
-      alert('A valid count is required');
+    if (!formData.total_grams || Number.parseInt(formData.total_grams) < 0) {
+      alert('Total grams is required');
       return;
     }
 
@@ -122,15 +138,25 @@ export function QuickAddYarnButton() {
       return;
     }
 
+    const totalGrams = Number.parseInt(formData.total_grams) || 0;
+    const gramsPerSkein = Number.parseInt(formData.grams_per_skein) || null;
+    const metersPerSkein = Number.parseInt(formData.meters_per_skein) || null;
+    const skeinCount = gramsPerSkein
+      ? Math.round((totalGrams / gramsPerSkein) * 10) / 10
+      : 0;
+
     const { data: yarn, error } = await supabase
       .from('yarns')
       .insert({
         name: formData.name,
         colorway: formData.colorway,
-        skein_count: Number.parseInt(formData.count) || 0,
+        skein_count: Math.round(skeinCount),
+        total_grams: totalGrams,
+        grams_per_skein: gramsPerSkein,
+        meters_per_skein: metersPerSkein,
         lot_number: formData.lot_number || null,
         notes: formData.notes || null,
-        is_active: Number.parseInt(formData.count) > 0,
+        is_active: totalGrams > 0,
         user_id: user.id,
         ravelry_id: formData.ravelry_id,
       })
@@ -175,7 +201,9 @@ export function QuickAddYarnButton() {
     setFormData({
       name: '',
       colorway: '',
-      count: '',
+      total_grams: '',
+      grams_per_skein: '',
+      meters_per_skein: '',
       lot_number: '',
       notes: '',
       ravelry_id: null,
@@ -249,18 +277,47 @@ export function QuickAddYarnButton() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="count">Count *</Label>
+            <Label htmlFor="total_grams">Total Grams *</Label>
             <Input
-              id="count"
+              id="total_grams"
               type="number"
               required
               min="0"
-              value={formData.count}
+              value={formData.total_grams}
               onChange={(e) =>
-                setFormData({ ...formData, count: e.target.value })
+                setFormData({ ...formData, total_grams: e.target.value })
               }
-              placeholder="Number of skeins"
+              placeholder="Total grams of yarn"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="grams_per_skein">Grams/Skein</Label>
+              <Input
+                id="grams_per_skein"
+                type="number"
+                min="1"
+                value={formData.grams_per_skein}
+                onChange={(e) =>
+                  setFormData({ ...formData, grams_per_skein: e.target.value })
+                }
+                placeholder="e.g., 100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="meters_per_skein">Meters/Skein</Label>
+              <Input
+                id="meters_per_skein"
+                type="number"
+                min="1"
+                value={formData.meters_per_skein}
+                onChange={(e) =>
+                  setFormData({ ...formData, meters_per_skein: e.target.value })
+                }
+                placeholder="e.g., 200"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
